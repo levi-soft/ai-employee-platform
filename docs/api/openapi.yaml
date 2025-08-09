@@ -1,0 +1,1562 @@
+
+openapi: 3.0.3
+info:
+  title: AI Employee Platform API
+  description: |
+    Comprehensive API documentation for the AI Employee Platform - a microservices-based AI agent management system.
+    
+    ## Authentication
+    Most endpoints require JWT authentication. Include the JWT token in the Authorization header:
+    ```
+    Authorization: Bearer <your-jwt-token>
+    ```
+    
+    ## Rate Limiting
+    - General API endpoints: 100 requests per minute per IP
+    - Authentication endpoints: 50 requests per minute per IP
+    - AI routing endpoints: 20 requests per minute per IP
+    
+    ## Error Handling
+    All endpoints return consistent error responses with the following structure:
+    ```json
+    {
+      "error": {
+        "code": "ERROR_CODE",
+        "message": "Human readable error message",
+        "details": {}
+      }
+    }
+    ```
+  version: 1.0.0
+  contact:
+    name: AI Employee Platform Team
+    email: support@ai-employee-platform.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.ai-employee-platform.com/v1
+    description: Production server
+  - url: https://staging-api.ai-employee-platform.com/v1
+    description: Staging server
+  - url: http://localhost:8080/v1
+    description: Local development server
+
+tags:
+  - name: Authentication
+    description: User authentication and session management
+  - name: Users
+    description: User management and profiles
+  - name: AI Routing
+    description: AI agent routing and request management
+  - name: Billing
+    description: Credit system and billing management
+  - name: Plugins
+    description: Plugin management and marketplace
+  - name: Notifications
+    description: Notification system and preferences
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login endpoint
+
+  schemas:
+    # Common schemas
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Invalid input parameters
+            details:
+              type: object
+
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+        total:
+          type: integer
+          example: 150
+        totalPages:
+          type: integer
+          example: 8
+
+    # User schemas
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - role
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          maxLength: 255
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        role:
+          type: string
+          enum: [ADMIN, EMPLOYEE]
+          example: EMPLOYEE
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00Z"
+
+    UserRegistration:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        password:
+          type: string
+          minLength: 8
+          example: "SecurePassword123!"
+
+    UserLogin:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        password:
+          type: string
+          example: "SecurePassword123!"
+
+    AuthResponse:
+      type: object
+      required:
+        - user
+        - tokens
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        tokens:
+          type: object
+          required:
+            - accessToken
+            - refreshToken
+          properties:
+            accessToken:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            refreshToken:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            expiresIn:
+              type: integer
+              example: 3600
+
+    # AI Agent schemas
+    AIAgent:
+      type: object
+      required:
+        - id
+        - name
+        - provider
+        - model
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "agent-gpt4-001"
+        name:
+          type: string
+          example: "GPT-4 Turbo"
+        provider:
+          type: string
+          enum: [openai, anthropic, google, ollama]
+          example: "openai"
+        model:
+          type: string
+          example: "gpt-4-turbo"
+        description:
+          type: string
+          example: "Advanced AI model for complex reasoning tasks"
+        capabilities:
+          type: array
+          items:
+            type: string
+          example: ["text-generation", "code-generation", "analysis"]
+        costPerRequest:
+          type: number
+          format: decimal
+          example: 0.05
+        isActive:
+          type: boolean
+          example: true
+
+    AIRequest:
+      type: object
+      required:
+        - prompt
+        - capabilities
+      properties:
+        prompt:
+          type: string
+          maxLength: 10000
+          example: "Explain quantum computing in simple terms"
+        capabilities:
+          type: array
+          items:
+            type: string
+          example: ["text-generation"]
+        priority:
+          type: string
+          enum: [low, normal, high, critical]
+          default: normal
+          example: "normal"
+        maxCost:
+          type: number
+          format: decimal
+          example: 1.00
+        metadata:
+          type: object
+          example: {"requestType": "explanation"}
+
+    AIResponse:
+      type: object
+      required:
+        - id
+        - selectedAgent
+        - response
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "req-123e4567-e89b-12d3-a456-426614174000"
+        selectedAgent:
+          $ref: '#/components/schemas/AIAgent'
+        prompt:
+          type: string
+          example: "Explain quantum computing in simple terms"
+        response:
+          type: string
+          example: "Quantum computing is a revolutionary technology..."
+        tokenUsed:
+          type: integer
+          example: 150
+        totalCost:
+          type: number
+          format: decimal
+          example: 0.05
+        processingTime:
+          type: integer
+          description: Processing time in milliseconds
+          example: 2500
+        alternatives:
+          type: array
+          items:
+            type: object
+            properties:
+              agent:
+                $ref: '#/components/schemas/AIAgent'
+              estimatedCost:
+                type: number
+                format: decimal
+              score:
+                type: number
+                format: decimal
+                minimum: 0
+                maximum: 100
+
+    # Billing schemas
+    CreditAccount:
+      type: object
+      required:
+        - userId
+        - balance
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        balance:
+          type: number
+          format: decimal
+          example: 25.50
+        totalEarned:
+          type: number
+          format: decimal
+          example: 100.00
+        totalSpent:
+          type: number
+          format: decimal
+          example: 74.50
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00Z"
+
+    Transaction:
+      type: object
+      required:
+        - id
+        - userId
+        - type
+        - amount
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "tx-123e4567-e89b-12d3-a456-426614174000"
+        userId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        type:
+          type: string
+          enum: [ADD, DEDUCT, REFUND]
+          example: "DEDUCT"
+        amount:
+          type: number
+          format: decimal
+          example: 0.05
+        description:
+          type: string
+          example: "AI request - GPT-4 Turbo"
+        status:
+          type: string
+          enum: [PENDING, COMPLETED, FAILED, CANCELLED]
+          example: "COMPLETED"
+        requestId:
+          type: string
+          format: uuid
+          example: "req-123e4567-e89b-12d3-a456-426614174000"
+        metadata:
+          type: object
+          example: {"agent": "gpt-4-turbo", "tokens": 150}
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00Z"
+
+    # Plugin schemas
+    Plugin:
+      type: object
+      required:
+        - id
+        - name
+        - version
+        - author
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "plugin-code-generator-001"
+        name:
+          type: string
+          example: "Advanced Code Generator"
+        version:
+          type: string
+          example: "1.2.0"
+        author:
+          type: string
+          example: "AI Platform Team"
+        description:
+          type: string
+          example: "Generate high-quality code in multiple programming languages"
+        category:
+          type: string
+          enum: [productivity, development, analysis, utility]
+          example: "development"
+        capabilities:
+          type: array
+          items:
+            type: string
+          example: ["code-generation", "syntax-highlighting"]
+        isActive:
+          type: boolean
+          example: true
+        rating:
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 5
+          example: 4.5
+        downloadCount:
+          type: integer
+          example: 1250
+        price:
+          type: number
+          format: decimal
+          example: 9.99
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00Z"
+
+    # Notification schemas
+    NotificationPreference:
+      type: object
+      required:
+        - userId
+        - type
+        - channels
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        type:
+          type: string
+          enum: [credit_low, ai_request_complete, plugin_update, system_maintenance]
+          example: "credit_low"
+        channels:
+          type: object
+          properties:
+            email:
+              type: boolean
+              example: true
+            push:
+              type: boolean
+              example: true
+            sms:
+              type: boolean
+              example: false
+        frequency:
+          type: string
+          enum: [immediate, daily, weekly]
+          default: immediate
+          example: "immediate"
+        quietHours:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              example: true
+            startTime:
+              type: string
+              format: time
+              example: "22:00"
+            endTime:
+              type: string
+              format: time
+              example: "08:00"
+            timezone:
+              type: string
+              example: "America/New_York"
+
+paths:
+  # Authentication endpoints
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      description: Register a new user account with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistration'
+            examples:
+              employee_registration:
+                summary: Employee registration
+                value:
+                  name: "John Doe"
+                  email: "john.doe@example.com"
+                  password: "SecurePassword123!"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                successful_registration:
+                  summary: Successful registration
+                  value:
+                    user:
+                      id: "123e4567-e89b-12d3-a456-426614174000"
+                      name: "John Doe"
+                      email: "john.doe@example.com"
+                      role: "EMPLOYEE"
+                      isActive: true
+                      createdAt: "2025-01-15T10:30:00Z"
+                      updatedAt: "2025-01-15T10:30:00Z"
+                    tokens:
+                      accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      expiresIn: 3600
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validation_error:
+                  summary: Invalid input data
+                  value:
+                    error:
+                      code: "VALIDATION_ERROR"
+                      message: "Invalid input parameters"
+                      details:
+                        email: "Email format is invalid"
+                        password: "Password must be at least 8 characters"
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                email_exists:
+                  summary: Email already registered
+                  value:
+                    error:
+                      code: "EMAIL_ALREADY_EXISTS"
+                      message: "A user with this email already exists"
+                      details: {}
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+            examples:
+              standard_login:
+                summary: Standard login
+                value:
+                  email: "john.doe@example.com"
+                  password: "SecurePassword123!"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                successful_login:
+                  summary: Successful login
+                  value:
+                    user:
+                      id: "123e4567-e89b-12d3-a456-426614174000"
+                      name: "John Doe"
+                      email: "john.doe@example.com"
+                      role: "EMPLOYEE"
+                      isActive: true
+                      createdAt: "2025-01-15T10:30:00Z"
+                      updatedAt: "2025-01-15T10:30:00Z"
+                    tokens:
+                      accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      expiresIn: 3600
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalid_credentials:
+                  summary: Wrong email or password
+                  value:
+                    error:
+                      code: "INVALID_CREDENTIALS"
+                      message: "Invalid email or password"
+                      details: {}
+        '429':
+          description: Too many login attempts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                rate_limit_exceeded:
+                  summary: Rate limit exceeded
+                  value:
+                    error:
+                      code: "RATE_LIMIT_EXCEEDED"
+                      message: "Too many login attempts. Please try again later."
+                      details:
+                        retryAfter: 300
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Generate new access token using refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  expiresIn:
+                    type: integer
+                    example: 3600
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout user
+      description: Invalidate current session and tokens
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Logged out successfully"
+
+  /auth/profile:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user profile
+      description: Retrieve the authenticated user's profile information
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # User management endpoints
+  /users:
+    get:
+      tags:
+        - Users
+      summary: List users
+      description: Get paginated list of users with optional filtering
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: search
+          in: query
+          description: Search by name or email
+          schema:
+            type: string
+        - name: role
+          in: query
+          description: Filter by role
+          schema:
+            type: string
+            enum: [ADMIN, EMPLOYEE]
+        - name: isActive
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Users
+      summary: Create new user
+      description: Create a new user (Admin only)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/UserRegistration'
+                - type: object
+                  properties:
+                    role:
+                      type: string
+                      enum: [ADMIN, EMPLOYEE]
+                      default: EMPLOYEE
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions (Admin required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/{id}:
+    get:
+      tags:
+        - Users
+      summary: Get user by ID
+      description: Retrieve specific user information
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Users
+      summary: Update user
+      description: Update user information (own profile or Admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                email:
+                  type: string
+                  format: email
+                role:
+                  type: string
+                  enum: [ADMIN, EMPLOYEE]
+                  description: Admin only field
+                isActive:
+                  type: boolean
+                  description: Admin only field
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # AI Routing endpoints
+  /ai/route:
+    post:
+      tags:
+        - AI Routing
+      summary: Route AI request
+      description: Submit an AI request and get routed to optimal agent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AIRequest'
+            examples:
+              text_generation:
+                summary: Text generation request
+                value:
+                  prompt: "Write a professional email about project status"
+                  capabilities: ["text-generation"]
+                  priority: "normal"
+                  maxCost: 1.00
+              code_generation:
+                summary: Code generation request
+                value:
+                  prompt: "Create a Python function to calculate Fibonacci sequence"
+                  capabilities: ["code-generation"]
+                  priority: "high"
+                  maxCost: 2.00
+      responses:
+        '200':
+          description: Request processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIResponse'
+              examples:
+                successful_response:
+                  summary: Successful AI response
+                  value:
+                    id: "req-123e4567-e89b-12d3-a456-426614174000"
+                    selectedAgent:
+                      id: "agent-gpt4-001"
+                      name: "GPT-4 Turbo"
+                      provider: "openai"
+                      model: "gpt-4-turbo"
+                      capabilities: ["text-generation", "code-generation"]
+                      costPerRequest: 0.05
+                    prompt: "Write a professional email about project status"
+                    response: "Subject: Project Status Update - Week Ending January 15, 2025..."
+                    tokenUsed: 125
+                    totalCost: 0.05
+                    processingTime: 2300
+                    alternatives:
+                      - agent:
+                          id: "agent-claude-001"
+                          name: "Claude 3 Sonnet"
+                          provider: "anthropic"
+                          model: "claude-3-sonnet"
+                        estimatedCost: 0.04
+                        score: 85.2
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validation_error:
+                  summary: Request validation failed
+                  value:
+                    error:
+                      code: "VALIDATION_ERROR"
+                      message: "Invalid request parameters"
+                      details:
+                        prompt: "Prompt is required and must not be empty"
+                        capabilities: "At least one capability is required"
+        '402':
+          description: Insufficient credits
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                insufficient_credits:
+                  summary: Not enough credits
+                  value:
+                    error:
+                      code: "INSUFFICIENT_CREDITS"
+                      message: "Insufficient credits for this request"
+                      details:
+                        required: 0.05
+                        available: 0.02
+        '503':
+          description: No agents available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /ai/agents:
+    get:
+      tags:
+        - AI Routing
+      summary: List available AI agents
+      description: Get list of available AI agents with their capabilities
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: provider
+          in: query
+          description: Filter by provider
+          schema:
+            type: string
+            enum: [openai, anthropic, google, ollama]
+        - name: capability
+          in: query
+          description: Filter by capability
+          schema:
+            type: string
+        - name: maxCost
+          in: query
+          description: Maximum cost per request
+          schema:
+            type: number
+            format: decimal
+      responses:
+        '200':
+          description: Agents retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AIAgent'
+                  total:
+                    type: integer
+                    example: 12
+
+  /ai/requests:
+    get:
+      tags:
+        - AI Routing
+      summary: Get user's AI requests history
+      description: Retrieve paginated history of user's AI requests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: agentId
+          in: query
+          description: Filter by agent ID
+          schema:
+            type: string
+        - name: fromDate
+          in: query
+          description: Filter from date
+          schema:
+            type: string
+            format: date-time
+        - name: toDate
+          in: query
+          description: Filter to date
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Request history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AIResponse'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  # Billing endpoints
+  /billing/credits:
+    get:
+      tags:
+        - Billing
+      summary: Get credit balance
+      description: Retrieve user's current credit account information
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Credit account retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditAccount'
+              examples:
+                credit_account:
+                  summary: User credit account
+                  value:
+                    userId: "123e4567-e89b-12d3-a456-426614174000"
+                    balance: 25.50
+                    totalEarned: 100.00
+                    totalSpent: 74.50
+                    updatedAt: "2025-01-15T10:30:00Z"
+
+    post:
+      tags:
+        - Billing
+      summary: Add credits
+      description: Add credits to user's account (payment processing)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+                - paymentMethod
+              properties:
+                amount:
+                  type: number
+                  format: decimal
+                  minimum: 5.00
+                  maximum: 1000.00
+                  example: 50.00
+                paymentMethod:
+                  type: string
+                  example: "card_1234567890"
+                description:
+                  type: string
+                  example: "Credit purchase - $50"
+      responses:
+        '201':
+          description: Credits added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transaction:
+                    $ref: '#/components/schemas/Transaction'
+                  newBalance:
+                    type: number
+                    format: decimal
+                    example: 75.50
+        '400':
+          description: Invalid payment request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /billing/transactions:
+    get:
+      tags:
+        - Billing
+      summary: Get transaction history
+      description: Retrieve user's transaction history
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: type
+          in: query
+          description: Filter by transaction type
+          schema:
+            type: string
+            enum: [ADD, DEDUCT, REFUND]
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+            enum: [PENDING, COMPLETED, FAILED, CANCELLED]
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Transactions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  # Plugin endpoints
+  /plugins:
+    get:
+      tags:
+        - Plugins
+      summary: Browse plugin marketplace
+      description: Get list of available plugins with filtering and search
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: search
+          in: query
+          description: Search by name or description
+          schema:
+            type: string
+        - name: category
+          in: query
+          description: Filter by category
+          schema:
+            type: string
+            enum: [productivity, development, analysis, utility]
+        - name: sortBy
+          in: query
+          description: Sort criteria
+          schema:
+            type: string
+            enum: [name, rating, downloadCount, createdAt, price]
+            default: rating
+        - name: sortOrder
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Plugins retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Plugin'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  /plugins/{id}:
+    get:
+      tags:
+        - Plugins
+      summary: Get plugin details
+      description: Get detailed information about a specific plugin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Plugin ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Plugin details retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Plugin'
+                  - type: object
+                    properties:
+                      documentation:
+                        type: string
+                        description: Plugin documentation
+                      changelog:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            version:
+                              type: string
+                            changes:
+                              type: array
+                              items:
+                                type: string
+                            releaseDate:
+                              type: string
+                              format: date-time
+                      reviews:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            userId:
+                              type: string
+                            rating:
+                              type: number
+                              format: decimal
+                            comment:
+                              type: string
+                            createdAt:
+                              type: string
+                              format: date-time
+        '404':
+          description: Plugin not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /plugins/{id}/install:
+    post:
+      tags:
+        - Plugins
+      summary: Install plugin
+      description: Install a plugin for the current user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Plugin ID
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Plugin installed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Plugin installed successfully"
+                  installedAt:
+                    type: string
+                    format: date-time
+        '400':
+          description: Plugin already installed or incompatible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '402':
+          description: Insufficient credits for paid plugin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Notification endpoints
+  /notifications/preferences:
+    get:
+      tags:
+        - Notifications
+      summary: Get notification preferences
+      description: Retrieve user's notification preferences
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Preferences retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationPreference'
+
+    put:
+      tags:
+        - Notifications
+      summary: Update notification preferences
+      description: Update user's notification preferences
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/NotificationPreference'
+      responses:
+        '200':
+          description: Preferences updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Notification preferences updated successfully"
+                  updated:
+                    type: integer
+                    example: 3
+
+  /notifications/history:
+    get:
+      tags:
+        - Notifications
+      summary: Get notification history
+      description: Retrieve user's notification history
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: type
+          in: query
+          description: Filter by notification type
+          schema:
+            type: string
+            enum: [credit_low, ai_request_complete, plugin_update, system_maintenance]
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+            enum: [sent, failed, pending]
+      responses:
+        '200':
+          description: History retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                        subject:
+                          type: string
+                        content:
+                          type: string
+                        channels:
+                          type: array
+                          items:
+                            type: string
+                        status:
+                          type: string
+                        sentAt:
+                          type: string
+                          format: date-time
+                        createdAt:
+                          type: string
+                          format: date-time
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+# Add security requirement globally for all endpoints
+security:
+  - BearerAuth: []

@@ -1,0 +1,113 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="AI Employee Platform API Documentation" />
+    <title>AI Employee Platform API</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui.css" />
+    <style>
+        html {
+            box-sizing: border-box;
+            overflow: -moz-scrollbars-vertical;
+            overflow-y: scroll;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+        body {
+            margin: 0;
+            background: #fafafa;
+        }
+        .swagger-ui .topbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .swagger-ui .topbar .download-url-wrapper {
+            display: none;
+        }
+        .swagger-ui .info .title {
+            color: #3b4151;
+        }
+    </style>
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-bundle.js" crossorigin></script>
+    <script>
+        window.onload = () => {
+            window.ui = SwaggerUIBundle({
+                url: './openapi.yaml',
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIBundle.presets.standalone,
+                ],
+                layout: "StandaloneLayout",
+                defaultModelsExpandDepth: 2,
+                defaultModelExpandDepth: 2,
+                docExpansion: "list",
+                operationsSorter: "alpha",
+                tagsSorter: "alpha",
+                showRequestHeaders: true,
+                showCommonExtensions: true,
+                tryItOutEnabled: true,
+                requestInterceptor: (request) => {
+                    // Add authorization header if token is available
+                    const token = localStorage.getItem('api_token');
+                    if (token) {
+                        request.headers.Authorization = `Bearer ${token}`;
+                    }
+                    return request;
+                },
+                onComplete: () => {
+                    // Add token input UI
+                    addTokenInput();
+                }
+            });
+        };
+
+        function addTokenInput() {
+            const topbar = document.querySelector('.swagger-ui .topbar');
+            if (topbar && !document.getElementById('token-input')) {
+                const tokenDiv = document.createElement('div');
+                tokenDiv.innerHTML = `
+                    <div id="token-input" style="display: flex; align-items: center; gap: 10px; margin-left: 20px;">
+                        <label style="color: white; font-weight: 500;">JWT Token:</label>
+                        <input type="password" id="api-token" placeholder="Enter your JWT token" 
+                               style="padding: 5px 10px; border: none; border-radius: 4px; width: 300px;" />
+                        <button onclick="setToken()" style="padding: 5px 15px; background: #49cc90; color: white; 
+                                border: none; border-radius: 4px; cursor: pointer;">Set Token</button>
+                        <button onclick="clearToken()" style="padding: 5px 15px; background: #f93e3e; color: white; 
+                                border: none; border-radius: 4px; cursor: pointer;">Clear</button>
+                    </div>
+                `;
+                topbar.appendChild(tokenDiv);
+
+                // Load saved token
+                const savedToken = localStorage.getItem('api_token');
+                if (savedToken) {
+                    document.getElementById('api-token').value = savedToken;
+                }
+            }
+        }
+
+        function setToken() {
+            const token = document.getElementById('api-token').value;
+            if (token) {
+                localStorage.setItem('api_token', token);
+                alert('Token set successfully!');
+            } else {
+                alert('Please enter a valid token');
+            }
+        }
+
+        function clearToken() {
+            localStorage.removeItem('api_token');
+            document.getElementById('api-token').value = '';
+            alert('Token cleared');
+        }
+    </script>
+</body>
+</html>

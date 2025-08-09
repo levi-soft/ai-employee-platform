@@ -1,0 +1,676 @@
+
+# Horizontal Pod Autoscaler (HPA) Configuration for AI Employee Platform
+# This configuration enables automatic scaling based on CPU, memory, and custom metrics
+
+apiVersion: v2
+kind: List
+metadata:
+  name: ai-platform-hpa-configs
+  namespace: ai-platform
+items:
+
+# Auth Service HPA
+- apiVersion: autoscaling/v2
+  kind: HorizontalPodAutoscaler
+  metadata:
+    name: auth-service-hpa
+    namespace: ai-platform
+    labels:
+      app: auth-service
+      component: hpa
+      tier: backend
+  spec:
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: auth-service
+    minReplicas: 2
+    maxReplicas: 10
+    metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+    - type: Pods
+      pods:
+        metric:
+          name: http_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: "100"
+    behavior:
+      scaleDown:
+        stabilizationWindowSeconds: 300
+        policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+        selectPolicy: Min
+      scaleUp:
+        stabilizationWindowSeconds: 60
+        policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+        - type: Pods
+          value: 4
+          periodSeconds: 60
+        selectPolicy: Max
+
+# AI Routing Service HPA
+- apiVersion: autoscaling/v2
+  kind: HorizontalPodAutoscaler
+  metadata:
+    name: ai-routing-service-hpa
+    namespace: ai-platform
+    labels:
+      app: ai-routing-service
+      component: hpa
+      tier: backend
+  spec:
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: ai-routing-service
+    minReplicas: 2
+    maxReplicas: 15
+    metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 75
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 85
+    - type: Pods
+      pods:
+        metric:
+          name: ai_request_queue_length
+        target:
+          type: AverageValue
+          averageValue: "10"
+    - type: Pods
+      pods:
+        metric:
+          name: ai_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: "5"
+    behavior:
+      scaleDown:
+        stabilizationWindowSeconds: 600  # Longer stabilization for AI workloads
+        policies:
+        - type: Percent
+          value: 25
+          periodSeconds: 120
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+        selectPolicy: Min
+      scaleUp:
+        stabilizationWindowSeconds: 120
+        policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+        - type: Pods
+          value: 3
+          periodSeconds: 60
+        selectPolicy: Max
+
+# User Management Service HPA
+- apiVersion: autoscaling/v2
+  kind: HorizontalPodAutoscaler
+  metadata:
+    name: user-management-service-hpa
+    namespace: ai-platform
+    labels:
+      app: user-management-service
+      component: hpa
+      tier: backend
+  spec:
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: user-management-service
+    minReplicas: 2
+    maxReplicas: 8
+    metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+    - type: Pods
+      pods:
+        metric:
+          name: http_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: "150"
+    behavior:
+      scaleDown:
+        stabilizationWindowSeconds: 300
+        policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+      scaleUp:
+        stabilizationWindowSeconds: 60
+        policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+
+# Billing Service HPA
+- apiVersion: autoscaling/v2
+  kind: HorizontalPodAutoscaler
+  metadata:
+    name: billing-service-hpa
+    namespace: ai-platform
+    labels:
+      app: billing-service
+      component: hpa
+      tier: backend
+  spec:
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: billing-service
+    minReplicas: 2
+    maxReplicas: 6
+    metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 65
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 75
+    - type: Pods
+      pods:
+        metric:
+          name: payment_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: "20"
+    behavior:
+      scaleDown:
+        stabilizationWindowSeconds: 450  # Conservative scaling for financial operations
+        policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 180
+        selectPolicy: Min
+      scaleUp:
+        stabilizationWindowSeconds: 90
+        policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+
+# Plugin Manager Service HPA
+- apiVersion: autoscaling/v2
+  kind: HorizontalPodAutoscaler
+  metadata:
+    name: plugin-manager-service-hpa
+    namespace: ai-platform
+    labels:
+      app: plugin-manager-service
+      component: hpa
+      tier: backend
+  spec:
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: plugin-manager-service
+    minReplicas: 1
+    maxReplicas: 5
+    metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+    - type: Pods
+      pods:
+        metric:
+          name: plugin_executions_per_second
+        target:
+          type: AverageValue
+          averageValue: "10"
+    behavior:
+      scaleDown:
+        stabilizationWindowSeconds: 300
+        policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+      scaleUp:
+        stabilizationWindowSeconds: 120
+        policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+
+# Notification Service HPA
+- apiVersion: autoscaling/v2
+  kind: HorizontalPodAutoscaler
+  metadata:
+    name: notification-service-hpa
+    namespace: ai-platform
+    labels:
+      app: notification-service
+      component: hpa
+      tier: backend
+  spec:
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: notification-service
+    minReplicas: 2
+    maxReplicas: 8
+    metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+    - type: Pods
+      pods:
+        metric:
+          name: websocket_connections
+        target:
+          type: AverageValue
+          averageValue: "1000"
+    - type: Pods
+      pods:
+        metric:
+          name: notifications_per_second
+        target:
+          type: AverageValue
+          averageValue: "100"
+    behavior:
+      scaleDown:
+        stabilizationWindowSeconds: 300
+        policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+      scaleUp:
+        stabilizationWindowSeconds: 60
+        policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+
+# Admin Dashboard HPA
+- apiVersion: autoscaling/v2
+  kind: HorizontalPodAutoscaler
+  metadata:
+    name: admin-dashboard-hpa
+    namespace: ai-platform
+    labels:
+      app: admin-dashboard
+      component: hpa
+      tier: frontend
+  spec:
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: admin-dashboard
+    minReplicas: 2
+    maxReplicas: 6
+    metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+    - type: Pods
+      pods:
+        metric:
+          name: http_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: "200"
+    behavior:
+      scaleDown:
+        stabilizationWindowSeconds: 300
+        policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+      scaleUp:
+        stabilizationWindowSeconds: 60
+        policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+
+# Employee Portal HPA
+- apiVersion: autoscaling/v2
+  kind: HorizontalPodAutoscaler
+  metadata:
+    name: employee-portal-hpa
+    namespace: ai-platform
+    labels:
+      app: employee-portal
+      component: hpa
+      tier: frontend
+  spec:
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: employee-portal
+    minReplicas: 2
+    maxReplicas: 10
+    metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+    - type: Pods
+      pods:
+        metric:
+          name: http_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: "300"
+    behavior:
+      scaleDown:
+        stabilizationWindowSeconds: 300
+        policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+      scaleUp:
+        stabilizationWindowSeconds: 60
+        policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+
+---
+# Vertical Pod Autoscaler (VPA) Configuration for Database Services
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: postgres-vpa
+  namespace: ai-platform
+  labels:
+    app: postgres
+    component: vpa
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: postgres
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: postgres
+      minAllowed:
+        cpu: 500m
+        memory: 512Mi
+      maxAllowed:
+        cpu: 4
+        memory: 8Gi
+      controlledResources: ["cpu", "memory"]
+
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: redis-vpa
+  namespace: ai-platform
+  labels:
+    app: redis
+    component: vpa
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: redis
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: redis
+      minAllowed:
+        cpu: 100m
+        memory: 128Mi
+      maxAllowed:
+        cpu: 2
+        memory: 4Gi
+      controlledResources: ["cpu", "memory"]
+
+---
+# Custom Resource Definition for AI Request Metrics
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: custom-metrics-config
+  namespace: ai-platform
+  labels:
+    component: monitoring
+data:
+  ai-metrics.yaml: |
+    rules:
+    - seriesQuery: 'ai_request_queue_length{namespace!="",pod!=""}'
+      resources:
+        overrides:
+          namespace: {resource: "namespace"}
+          pod: {resource: "pod"}
+      name:
+        matches: "^ai_request_queue_length$"
+        as: "ai_request_queue_length"
+      metricsQuery: 'sum(<<.Series>>{<<.LabelMatchers>>}) by (<<.GroupBy>>)'
+    
+    - seriesQuery: 'ai_requests_per_second{namespace!="",pod!=""}'
+      resources:
+        overrides:
+          namespace: {resource: "namespace"}
+          pod: {resource: "pod"}
+      name:
+        matches: "^ai_requests_per_second$"
+        as: "ai_requests_per_second"
+      metricsQuery: 'sum(rate(<<.Series>>{<<.LabelMatchers>>}[2m])) by (<<.GroupBy>>)'
+    
+    - seriesQuery: 'websocket_connections{namespace!="",pod!=""}'
+      resources:
+        overrides:
+          namespace: {resource: "namespace"}
+          pod: {resource: "pod"}
+      name:
+        matches: "^websocket_connections$"
+        as: "websocket_connections"
+      metricsQuery: 'sum(<<.Series>>{<<.LabelMatchers>>}) by (<<.GroupBy>>)'
+    
+    - seriesQuery: 'payment_requests_per_second{namespace!="",pod!=""}'
+      resources:
+        overrides:
+          namespace: {resource: "namespace"}
+          pod: {resource: "pod"}
+      name:
+        matches: "^payment_requests_per_second$"
+        as: "payment_requests_per_second"
+      metricsQuery: 'sum(rate(<<.Series>>{<<.LabelMatchers>>}[2m])) by (<<.GroupBy>>)'
+    
+    - seriesQuery: 'plugin_executions_per_second{namespace!="",pod!=""}'
+      resources:
+        overrides:
+          namespace: {resource: "namespace"}
+          pod: {resource: "pod"}
+      name:
+        matches: "^plugin_executions_per_second$"
+        as: "plugin_executions_per_second"
+      metricsQuery: 'sum(rate(<<.Series>>{<<.LabelMatchers>>}[2m])) by (<<.GroupBy>>)'
+
+---
+# Service Monitor for Custom Metrics Collection
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ai-platform-metrics
+  namespace: ai-platform
+  labels:
+    app: ai-platform
+    component: monitoring
+spec:
+  selector:
+    matchLabels:
+      metrics: enabled
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+  - port: http
+    interval: 30s
+    path: /health/metrics
+  namespaceSelector:
+    matchNames:
+    - ai-platform
+
+---
+# Pod Disruption Budgets to ensure availability during scaling
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: auth-service-pdb
+  namespace: ai-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: auth-service
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ai-routing-service-pdb
+  namespace: ai-platform
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: ai-routing-service
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: user-management-service-pdb
+  namespace: ai-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: user-management-service
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: billing-service-pdb
+  namespace: ai-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: billing-service
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: notification-service-pdb
+  namespace: ai-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: notification-service
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: admin-dashboard-pdb
+  namespace: ai-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: admin-dashboard
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: employee-portal-pdb
+  namespace: ai-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: employee-portal

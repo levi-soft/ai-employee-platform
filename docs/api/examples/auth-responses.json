@@ -1,0 +1,159 @@
+
+{
+  "authentication": {
+    "successful_registration": {
+      "status": 201,
+      "description": "Successful user registration with JWT tokens",
+      "response": {
+        "user": {
+          "id": "123e4567-e89b-12d3-a456-426614174000",
+          "name": "John Doe",
+          "email": "john.doe@example.com",
+          "role": "EMPLOYEE",
+          "isActive": true,
+          "createdAt": "2025-01-15T10:30:00Z",
+          "updatedAt": "2025-01-15T10:30:00Z"
+        },
+        "tokens": {
+          "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMjNlNDU2Ny1lODliLTEyZDMtYTQ1Ni00MjY2MTQxNzQwMDAiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwicm9sZSI6IkVNUExPWUVFIiwiaWF0IjoxNzQyMTE2MjAwLCJleHAiOjE3NDIxMTk4MDB9.example_signature",
+          "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMjNlNDU2Ny1lODliLTEyZDMtYTQ1Ni00MjY2MTQxNzQwMDAiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc0MjExNjIwMCwiZXhwIjoxNzQyNzIxMDAwfQ.example_refresh_signature",
+          "expiresIn": 3600
+        }
+      }
+    },
+    "successful_login": {
+      "status": 200,
+      "description": "Successful user login with JWT tokens",
+      "response": {
+        "user": {
+          "id": "123e4567-e89b-12d3-a456-426614174000",
+          "name": "John Doe",
+          "email": "john.doe@example.com",
+          "role": "EMPLOYEE",
+          "isActive": true,
+          "createdAt": "2025-01-15T10:30:00Z",
+          "updatedAt": "2025-01-15T10:30:00Z"
+        },
+        "tokens": {
+          "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMjNlNDU2Ny1lODliLTEyZDMtYTQ1Ni00MjY2MTQxNzQwMDAiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwicm9sZSI6IkVNUExPWUVFIiwiaWF0IjoxNzQyMTE2MjAwLCJleHAiOjE3NDIxMTk4MDB9.example_signature",
+          "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMjNlNDU2Ny1lODliLTEyZDMtYTQ1Ni00MjY2MTQxNzQwMDAiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc0MjExNjIwMCwiZXhwIjoxNzQyNzIxMDAwfQ.example_refresh_signature",
+          "expiresIn": 3600
+        }
+      }
+    },
+    "invalid_credentials": {
+      "status": 401,
+      "description": "Login failed due to invalid credentials",
+      "response": {
+        "error": {
+          "code": "INVALID_CREDENTIALS",
+          "message": "Invalid email or password",
+          "details": {}
+        }
+      }
+    },
+    "validation_error": {
+      "status": 400,
+      "description": "Registration failed due to validation errors",
+      "response": {
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "Invalid input parameters",
+          "details": {
+            "email": "Email format is invalid",
+            "password": "Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, and one number"
+          }
+        }
+      }
+    },
+    "email_already_exists": {
+      "status": 409,
+      "description": "Registration failed - email already exists",
+      "response": {
+        "error": {
+          "code": "EMAIL_ALREADY_EXISTS",
+          "message": "A user with this email already exists",
+          "details": {}
+        }
+      }
+    },
+    "rate_limit_exceeded": {
+      "status": 429,
+      "description": "Too many login attempts",
+      "response": {
+        "error": {
+          "code": "RATE_LIMIT_EXCEEDED",
+          "message": "Too many login attempts. Please try again later.",
+          "details": {
+            "retryAfter": 300,
+            "maxAttempts": 5,
+            "windowMs": 900000
+          }
+        }
+      }
+    },
+    "token_refresh_success": {
+      "status": 200,
+      "description": "Access token refreshed successfully",
+      "response": {
+        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMjNlNDU2Ny1lODliLTEyZDMtYTQ1Ni00MjY2MTQxNzQwMDAiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwicm9sZSI6IkVNUExPWUVFIiwiaWF0IjoxNzQyMTE2ODAwLCJleHAiOjE3NDIxMjA0MDB9.new_signature",
+        "expiresIn": 3600
+      }
+    },
+    "invalid_refresh_token": {
+      "status": 401,
+      "description": "Refresh token is invalid or expired",
+      "response": {
+        "error": {
+          "code": "INVALID_REFRESH_TOKEN",
+          "message": "Invalid or expired refresh token",
+          "details": {}
+        }
+      }
+    },
+    "logout_success": {
+      "status": 200,
+      "description": "User logged out successfully",
+      "response": {
+        "message": "Logged out successfully"
+      }
+    },
+    "profile_success": {
+      "status": 200,
+      "description": "User profile retrieved successfully",
+      "response": {
+        "id": "123e4567-e89b-12d3-a456-426614174000",
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "role": "EMPLOYEE",
+        "isActive": true,
+        "createdAt": "2025-01-15T10:30:00Z",
+        "updatedAt": "2025-01-15T10:30:00Z"
+      }
+    },
+    "unauthorized_access": {
+      "status": 401,
+      "description": "Authentication required",
+      "response": {
+        "error": {
+          "code": "UNAUTHORIZED",
+          "message": "Authentication required. Please provide a valid access token.",
+          "details": {}
+        }
+      }
+    },
+    "expired_token": {
+      "status": 401,
+      "description": "Access token has expired",
+      "response": {
+        "error": {
+          "code": "TOKEN_EXPIRED",
+          "message": "Access token has expired. Please refresh your token.",
+          "details": {
+            "expiredAt": "2025-01-15T11:30:00Z"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,103 @@
+
+version: '3.8'
+
+services:
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ai-platform-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ai-platform-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./provisioning:/etc/grafana/provisioning
+      - ./dashboards:/etc/grafana/provisioning/dashboards
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+
+  # Node Exporter for system metrics
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: ai-platform-node-exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    ports:
+      - "9100:9100"
+    networks:
+      - monitoring
+
+  # cAdvisor for container metrics
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: ai-platform-cadvisor
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /cgroup:/cgroup:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - monitoring
+
+  # AlertManager for alerts
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: ai-platform-alertmanager
+    restart: unless-stopped
+    volumes:
+      - ./alertmanager:/etc/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+    ports:
+      - "9093:9093"
+    networks:
+      - monitoring
+
+volumes:
+  prometheus_data: {}
+  grafana_data: {}
+
+networks:
+  monitoring:
+    driver: bridge

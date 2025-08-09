@@ -1,0 +1,217 @@
+###################### Filebeat Configuration Example #########################
+
+# This file is an example configuration file highlighting only the most common
+# options. The filebeat.reference.yml file from the same directory contains all the
+# supported options with more comments. You can use it as a reference.
+
+#=========================== Filebeat inputs =============================
+
+filebeat.inputs:
+  # Log files from AI Platform services
+  - type: log
+    enabled: true
+    paths:
+      - /app/logs/*.log
+      - /app/logs/**/*.log
+    fields:
+      source: 'ai-platform-files'
+      environment: '${ENVIRONMENT:development}'
+    fields_under_root: true
+    multiline.pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+    exclude_lines: ['^DBG']
+
+  # Docker container logs
+  - type: container
+    enabled: true
+    paths:
+      - '/var/lib/docker/containers/*/*.log'
+
+    # Processor to add container metadata
+    processors:
+      - add_docker_metadata:
+          host: 'unix:///var/run/docker.sock'
+
+      # Only process AI Platform containers
+      - drop_event:
+          when:
+            not:
+              or:
+                - contains:
+                    docker.container.name: 'ai-platform'
+                - contains:
+                    docker.container.name: 'auth-service'
+                - contains:
+                    docker.container.name: 'ai-routing'
+                - contains:
+                    docker.container.name: 'billing-service'
+                - contains:
+                    docker.container.name: 'user-management'
+                - contains:
+                    docker.container.name: 'plugin-manager'
+                - contains:
+                    docker.container.name: 'notification-service'
+                - contains:
+                    docker.container.name: 'admin-dashboard'
+                - contains:
+                    docker.container.name: 'employee-portal'
+
+  # System metrics as logs (optional)
+  - type: log
+    enabled: false
+    paths:
+      - /var/log/syslog
+      - /var/log/messages
+    fields:
+      source: 'system'
+      log_type: 'system'
+
+#==================== Elasticsearch template setting ==========================
+
+setup.template.settings:
+  index.number_of_shards: 1
+  index.codec: best_compression
+  _source.enabled: true
+
+setup.template.pattern: 'filebeat-*'
+setup.template.name: 'filebeat'
+
+#================================ General =====================================
+
+# The name of the shipper that publishes the network data. It can be used to group
+# all the transactions sent by a single shipper in the web interface.
+name: ai-platform-filebeat
+
+# The tags of the shipper are included in their own field with each
+# transaction published.
+tags: ['ai-platform', 'filebeat']
+
+# Optional fields that you can specify to add additional information to the
+# output.
+fields:
+  platform: ai-platform
+  environment: ${ENVIRONMENT:development}
+
+#============================== Dashboards =====================================
+# These settings control loading the sample dashboards to the Kibana index. Loading
+# the dashboards is disabled by default and can be enabled either by setting the
+# options here or by using the `setup` command.
+setup.dashboards.enabled: false
+
+#============================== Kibana =====================================
+
+# Starting with Beats version 6.0.0, the dashboards are loaded via the Kibana API.
+# This requires a Kibana endpoint configuration.
+setup.kibana:
+  host: 'http://kibana:5601'
+
+#============================= Elastic Cloud ==================================
+
+# These settings simplify using Filebeat with the Elastic Cloud (https://cloud.elastic.co/).
+
+# The cloud.id setting overwrites the `output.elasticsearch.hosts` and
+# `setup.kibana.host` options.
+# You can find the `cloud.id` in the Elastic Cloud web UI.
+#cloud.id:
+
+# The cloud.auth setting overwrites the `output.elasticsearch.username` and
+# `output.elasticsearch.password` settings. The format is `<user>:<pass>`.
+#cloud.auth:
+
+#================================ Outputs =====================================
+
+# Configure what output to use when sending the data collected by the beat.
+
+#-------------------------- Elasticsearch output ------------------------------
+output.elasticsearch:
+  # Array of hosts to connect to.
+  hosts: ['${ELASTICSEARCH_HOSTS:elasticsearch:9200}']
+
+  # Template name
+  template.name: 'filebeat-ai-platform'
+  template.pattern: 'filebeat-ai-platform-*'
+
+  # Index configuration
+  index: 'filebeat-ai-platform-%{+yyyy.MM.dd}'
+
+  # Pipeline for processing
+  pipeline: 'filebeat-ai-platform-pipeline'
+
+#----------------------------- Logstash output --------------------------------
+#output.logstash:
+# The Logstash hosts
+#hosts: ["logstash:5044"]
+
+#================================ Processors =====================================
+
+# Configure processors to enhance or manipulate events generated by the beat.
+
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+
+  - add_docker_metadata: ~
+
+  - add_kubernetes_metadata: ~
+
+  # Decode JSON fields
+  - decode_json_fields:
+      fields: ['message']
+      target: ''
+      overwrite_keys: true
+      add_error_key: true
+
+  # Drop empty events
+  - drop_event:
+      when:
+        equals:
+          message: ''
+
+  # Add timestamp if missing
+  - timestamp:
+      field: timestamp
+      layouts:
+        - '2006-01-02T15:04:05.000Z'
+        - '2006-01-02T15:04:05Z'
+      test:
+        - '2023-08-08T12:34:56.123Z'
+
+#================================ Logging =====================================
+
+# Sets log level. The default log level is info.
+# Available log levels are: error, warning, info, debug
+logging.level: info
+
+# At debug level, you can selectively enable logging only for some components.
+# To enable all selectors use ["*"]. Examples of other selectors are "beat",
+# "publish", "service".
+logging.selectors: ['*']
+
+#============================== X-Pack Monitoring ===============================
+# filebeat can export internal metrics to a central Elasticsearch monitoring
+# cluster.  This requires xpack monitoring to be enabled in Elasticsearch.  The
+# reporting is disabled by default.
+
+# Set to true to enable the monitoring reporter.
+monitoring.enabled: true
+
+# Sets the UUID of the Elasticsearch cluster under which monitoring data for this
+# Filebeat instance will appear in the Stack Monitoring UI. If output.elasticsearch
+# is enabled, the UUID is derived from the Elasticsearch cluster referenced by output.elasticsearch.
+#monitoring.cluster_uuid:
+
+# Uncomment to send the metrics to Elasticsearch. Most settings from the
+# Elasticsearch output are accepted here as well.
+# Note that the settings should point to your Elasticsearch *monitoring* cluster.
+# Any setting that is not set is automatically inherited from the Elasticsearch
+# output configuration, so if you have the Elasticsearch output configured such
+# that it is pointing to your Elasticsearch monitoring cluster, you can simply
+# uncomment the following line.
+monitoring.elasticsearch:
+  hosts: ['${ELASTICSEARCH_HOSTS:elasticsearch:9200}']
+
+#================================= Migration ==================================
+
+# This allows to enable 6.7 migration aliases
+migration.6_to_7.enabled: false

@@ -1,0 +1,34 @@
+# Settings file in YAML
+# Settings can be specified either in hierarchical form, e.g.:
+#   pipeline:
+#     batch:
+#       size: 125
+#       delay: 50
+# Or as flat keys:
+#   pipeline.batch.size: 125
+#   pipeline.batch.delay: 50
+
+http.host: '0.0.0.0'
+xpack.monitoring.enabled: false
+
+# Pipeline settings
+pipeline.workers: 2
+pipeline.batch.size: 1000
+pipeline.batch.delay: 50
+
+# Path settings
+path.data: /usr/share/logstash/data
+path.logs: /usr/share/logstash/logs
+
+# Queue settings
+queue.type: memory
+
+# Dead letter queue
+dead_letter_queue.enable: false
+
+# Log level
+log.level: info
+
+# Config reload
+config.reload.automatic: true
+config.reload.interval: 3s

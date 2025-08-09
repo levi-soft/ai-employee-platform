@@ -1,0 +1,32 @@
+
+# Development Dockerfile with hot reload
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install curl for health checks and nodemon for hot reload
+RUN apk add --no-cache curl
+RUN npm install -g nodemon
+
+# Install dependencies
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+RUN \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci; \
+  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --frozen-lockfile; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
+
+# Copy source code
+COPY . .
+
+ENV NODE_ENV development
+
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+# Use nodemon for hot reload in development
+CMD ["nodemon", "--exec", "npm run dev"]

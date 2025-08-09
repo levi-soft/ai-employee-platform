@@ -1,0 +1,373 @@
+# Production Docker Compose Configuration
+version: '3.8'
+
+services:
+  # Database Services
+  postgres:
+    image: postgres:15-alpine
+    container_name: ai_platform_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ai_employee_platform
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ai_employee_platform"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - ai_platform
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  redis:
+    image: redis:7-alpine
+    container_name: ai_platform_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ai_platform
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+  # Backend Services
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    container_name: ai_platform_auth
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/ai_employee_platform
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-production_jwt_secret_change_this}
+      - PORT=3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ai_platform
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  ai-routing-service:
+    build:
+      context: ./services/ai-routing-service
+      dockerfile: Dockerfile
+    container_name: ai_platform_ai_routing
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/ai_employee_platform
+      - REDIS_URL=redis://redis:6379
+      - PORT=3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ai_platform
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  billing-service:
+    build:
+      context: ./services/billing-service
+      dockerfile: Dockerfile
+    container_name: ai_platform_billing
+    restart: unless-stopped
+    ports:
+      - "3003:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/ai_employee_platform
+      - REDIS_URL=redis://redis:6379
+      - PORT=3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ai_platform
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  user-management-service:
+    build:
+      context: ./services/user-management-service
+      dockerfile: Dockerfile
+    container_name: ai_platform_user_mgmt
+    restart: unless-stopped
+    ports:
+      - "3004:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/ai_employee_platform
+      - REDIS_URL=redis://redis:6379
+      - PORT=3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ai_platform
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  plugin-manager-service:
+    build:
+      context: ./services/plugin-manager-service
+      dockerfile: Dockerfile
+    container_name: ai_platform_plugin_mgr
+    restart: unless-stopped
+    ports:
+      - "3005:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/ai_employee_platform
+      - REDIS_URL=redis://redis:6379
+      - PORT=3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ai_platform
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: ai_platform_notification
+    restart: unless-stopped
+    ports:
+      - "3006:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/ai_employee_platform
+      - REDIS_URL=redis://redis:6379
+      - PORT=3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ai_platform
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # Frontend Applications
+  admin-dashboard:
+    build:
+      context: ./apps/admin-dashboard
+      dockerfile: Dockerfile
+    container_name: ai_platform_admin_dashboard
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NEXT_TELEMETRY_DISABLED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - ai_platform
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  employee-portal:
+    build:
+      context: ./apps/employee-portal
+      dockerfile: Dockerfile
+    container_name: ai_platform_employee_portal
+    restart: unless-stopped
+    ports:
+      - "3100:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NEXT_TELEMETRY_DISABLED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - ai_platform
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  # API Gateway (Enhanced)
+  api-gateway:
+    build:
+      context: ./infrastructure/nginx
+      dockerfile: Dockerfile
+    container_name: ai_platform_api_gateway
+    restart: unless-stopped
+    ports:
+      - "80:80"     # HTTP (redirects to HTTPS)
+      - "443:443"   # HTTPS with SSL termination
+      - "8080:80"   # HTTP for backward compatibility
+    environment:
+      - DOMAIN=ai-employee-platform.local
+    volumes:
+      - ./infrastructure/nginx/ssl:/etc/nginx/ssl:rw
+      - api_gateway_logs:/var/log/nginx
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      ai-routing-service:
+        condition: service_healthy
+      billing-service:
+        condition: service_healthy
+      user-management-service:
+        condition: service_healthy
+      plugin-manager-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+      admin-dashboard:
+        condition: service_healthy
+      employee-portal:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-k", "-f", "https://localhost/health", "||", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - ai_platform
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  api_gateway_logs:
+    driver: local
+
+networks:
+  ai_platform:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16

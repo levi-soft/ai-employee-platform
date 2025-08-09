@@ -1,0 +1,163 @@
+
+# Docker Compose Configuration for Integration Testing
+# Provides isolated test environment for integration tests
+
+version: '3.8'
+
+services:
+  # PostgreSQL Test Database
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: ai-employee-platform-postgres-test
+    environment:
+      POSTGRES_DB: ai_platform_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: testpassword
+      POSTGRES_INITDB_ARGS: "--auth-host=md5"
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./database/scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ai_platform_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+    command: >
+      postgres -c log_statement=all
+               -c log_destination=stderr
+               -c log_min_messages=info
+               -c max_connections=200
+               -c shared_buffers=256MB
+               -c effective_cache_size=1GB
+    restart: unless-stopped
+
+  # Redis Test Instance
+  redis-test:
+    image: redis:7-alpine
+    container_name: ai-employee-platform-redis-test
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+    volumes:
+      - redis_test_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+    command: >
+      redis-server --maxmemory 256mb
+                   --maxmemory-policy allkeys-lru
+                   --save 60 1
+                   --loglevel notice
+                   --databases 16
+    restart: unless-stopped
+
+  # Test Auth Service (for integration testing)
+  auth-service-test:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile.dev
+    container_name: ai-employee-platform-auth-test
+    environment:
+      NODE_ENV: test
+      PORT: 3001
+      DATABASE_URL: postgresql://postgres:testpassword@postgres-test:5432/ai_platform_test
+      REDIS_URL: redis://redis-test:6379/1
+      JWT_SECRET: test-jwt-secret-key-super-long-and-secure
+      JWT_REFRESH_SECRET: test-jwt-refresh-secret-key-super-long-and-secure
+      BCRYPT_ROUNDS: 10
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./services/auth-service/src:/app/src
+      - ./packages:/packages
+      - auth_test_logs:/app/logs
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - test-network
+    restart: unless-stopped
+
+  # Test Data Seeder (runs once to populate test data)
+  test-seeder:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    container_name: ai-employee-platform-test-seeder
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:testpassword@postgres-test:5432/ai_platform_test
+    volumes:
+      - ./database:/app
+      - ./tests/fixtures:/app/fixtures
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    networks:
+      - test-network
+    command: yarn seed:test
+    restart: "no"
+
+  # Mailhog (for email testing)
+  mailhog-test:
+    image: mailhog/mailhog:latest
+    container_name: ai-employee-platform-mailhog-test
+    ports:
+      - "1025:1025"  # SMTP port
+      - "8025:8025"  # Web UI port
+    networks:
+      - test-network
+    restart: unless-stopped
+
+  # Test File Storage
+  minio-test:
+    image: minio/minio:latest
+    container_name: ai-employee-platform-minio-test
+    environment:
+      MINIO_ROOT_USER: testuser
+      MINIO_ROOT_PASSWORD: testpassword123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_test_data:/data
+    networks:
+      - test-network
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  postgres_test_data:
+    driver: local
+  redis_test_data:
+    driver: local
+  auth_test_logs:
+    driver: local
+  minio_test_data:
+    driver: local
+
+networks:
+  test-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

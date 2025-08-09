@@ -1,0 +1,168 @@
+
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Auth Service",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/services/auth-service/src/index.ts",
+      "outFiles": ["${workspaceFolder}/services/auth-service/dist/**/*.js"],
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "NODE_ENV": "development",
+        "PORT": "3001"
+      },
+      "console": "integratedTerminal",
+      "restart": true,
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug AI Routing Service",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/services/ai-routing-service/src/index.ts",
+      "outFiles": ["${workspaceFolder}/services/ai-routing-service/dist/**/*.js"],
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "NODE_ENV": "development",
+        "PORT": "3003"
+      },
+      "console": "integratedTerminal",
+      "restart": true,
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug Billing Service",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/services/billing-service/src/index.ts",
+      "outFiles": ["${workspaceFolder}/services/billing-service/dist/**/*.js"],
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "NODE_ENV": "development",
+        "PORT": "3004"
+      },
+      "console": "integratedTerminal",
+      "restart": true,
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug User Management Service",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/services/user-management-service/src/index.ts",
+      "outFiles": ["${workspaceFolder}/services/user-management-service/dist/**/*.js"],
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "NODE_ENV": "development",
+        "PORT": "3005"
+      },
+      "console": "integratedTerminal",
+      "restart": true,
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug Plugin Manager Service",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/services/plugin-manager-service/src/index.ts",
+      "outFiles": ["${workspaceFolder}/services/plugin-manager-service/dist/**/*.js"],
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "NODE_ENV": "development",
+        "PORT": "3006"
+      },
+      "console": "integratedTerminal",
+      "restart": true,
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug Notification Service",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/services/notification-service/src/index.ts",
+      "outFiles": ["${workspaceFolder}/services/notification-service/dist/**/*.js"],
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "NODE_ENV": "development",
+        "PORT": "3007"
+      },
+      "console": "integratedTerminal",
+      "restart": true,
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug Next.js Admin Dashboard",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/apps/admin-dashboard/node_modules/.bin/next",
+      "args": ["dev"],
+      "cwd": "${workspaceFolder}/apps/admin-dashboard",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "NODE_ENV": "development",
+        "PORT": "3000"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug Next.js Employee Portal",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/apps/employee-portal/node_modules/.bin/next",
+      "args": ["dev"],
+      "cwd": "${workspaceFolder}/apps/employee-portal",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "NODE_ENV": "development",
+        "PORT": "3002"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug All Services",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/dev-start.sh",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug Backend Services",
+      "configurations": [
+        "Debug Auth Service",
+        "Debug AI Routing Service", 
+        "Debug Billing Service",
+        "Debug User Management Service",
+        "Debug Plugin Manager Service",
+        "Debug Notification Service"
+      ]
+    },
+    {
+      "name": "Debug Frontend Apps",
+      "configurations": [
+        "Debug Next.js Admin Dashboard",
+        "Debug Next.js Employee Portal"
+      ]
+    },
+    {
+      "name": "Debug Full Stack",
+      "configurations": [
+        "Debug Auth Service",
+        "Debug Next.js Admin Dashboard",
+        "Debug Next.js Employee Portal"
+      ]
+    }
+  ]
+}

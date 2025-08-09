@@ -1,0 +1,20 @@
+
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "bradlc.vscode-tailwindcss",
+    "ms-typescript.typescript-importer",
+    "ms-vscode.vscode-typescript-next",
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense",
+    "ms-vscode.vscode-json",
+    "redhat.vscode-yaml",
+    "ms-vscode.vscode-docker",
+    "ms-vscode.vscode-eslint",
+    "orta.vscode-jest",
+    "ms-playwright.playwright",
+    "prisma.prisma",
+    "bradlc.vscode-tailwindcss"
+  ]
+}

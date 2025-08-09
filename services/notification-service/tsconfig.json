@@ -1,0 +1,21 @@
+
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./*"],
+      "@ai-platform/shared-utils": ["../../packages/shared-utils/src"],
+      "@ai-platform/shared-types": ["../../packages/shared-types/src"]
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests"
+  ]
+}

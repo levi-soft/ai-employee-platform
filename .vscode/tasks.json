@@ -1,0 +1,137 @@
+
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Install Dependencies",
+      "type": "shell",
+      "command": "npm",
+      "args": ["install"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build All Packages",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Start Development Environment",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/dev-start.sh",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Tests",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "test"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Linting",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "lint"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": ["$eslint-stylish"]
+    },
+    {
+      "label": "Database Migrate",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "migrate:dev"],
+      "options": {
+        "cwd": "${workspaceFolder}/database"
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Database Reset",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "reset"],
+      "options": {
+        "cwd": "${workspaceFolder}/database"
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker Start Dev",
+      "type": "shell",
+      "command": "docker-compose",
+      "args": ["-f", "docker-compose.yml", "-f", "docker-compose.dev.yml", "up", "-d"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker Stop",
+      "type": "shell",
+      "command": "docker-compose",
+      "args": ["down"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,188 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '20'
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+jobs:
+  lint-and-type-check:
+    runs-on: ubuntu-latest
+    name: Lint and Type Check
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run type-check
+
+  test:
+    runs-on: ubuntu-latest
+    name: Test
+    needs: lint-and-type-check
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+
+  build:
+    runs-on: ubuntu-latest
+    name: Build
+    needs: [lint-and-type-check, test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            apps/*/dist
+            apps/*/.next
+            services/*/dist
+            packages/*/dist
+          retention-days: 1
+
+  security-scan:
+    runs-on: ubuntu-latest
+    name: Security Scan
+    needs: lint-and-type-check
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit
+        run: npm audit --audit-level=high
+
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          languages: typescript, javascript
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    name: Deploy to Staging
+    needs: [build, security-scan]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment:
+      name: staging
+      url: https://staging.ai-employee-platform.com
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Deployment logic would go here
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    name: Deploy to Production
+    needs: [build, security-scan]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://ai-employee-platform.com
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production environment..."
+          # Deployment logic would go here

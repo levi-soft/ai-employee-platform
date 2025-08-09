@@ -1,0 +1,256 @@
+
+{
+  "billing": {
+    "credit_account_success": {
+      "status": 200,
+      "description": "Credit account information retrieved successfully",
+      "response": {
+        "userId": "123e4567-e89b-12d3-a456-426614174000",
+        "balance": 25.50,
+        "totalEarned": 100.00,
+        "totalSpent": 74.50,
+        "updatedAt": "2025-01-15T10:30:00Z"
+      }
+    },
+    "add_credits_success": {
+      "status": 201,
+      "description": "Credits added successfully via payment processing",
+      "response": {
+        "transaction": {
+          "id": "tx-123e4567-e89b-12d3-a456-426614174000",
+          "userId": "123e4567-e89b-12d3-a456-426614174000",
+          "type": "ADD",
+          "amount": 50.00,
+          "description": "Credit purchase - $50.00",
+          "status": "COMPLETED",
+          "metadata": {
+            "paymentMethod": "card_1234567890abcdef",
+            "paymentIntentId": "pi_1234567890abcdef",
+            "receipt": "https://pay.stripe.com/receipts/123"
+          },
+          "createdAt": "2025-01-15T10:30:00Z",
+          "updatedAt": "2025-01-15T10:30:05Z"
+        },
+        "newBalance": 75.50,
+        "previousBalance": 25.50
+      }
+    },
+    "payment_failed": {
+      "status": 400,
+      "description": "Payment processing failed",
+      "response": {
+        "error": {
+          "code": "PAYMENT_FAILED",
+          "message": "Payment could not be processed",
+          "details": {
+            "reason": "card_declined",
+            "declineCode": "insufficient_funds",
+            "paymentIntentId": "pi_1234567890abcdef"
+          }
+        }
+      }
+    },
+    "invalid_payment_method": {
+      "status": 400,
+      "description": "Invalid payment method provided",
+      "response": {
+        "error": {
+          "code": "INVALID_PAYMENT_METHOD",
+          "message": "The provided payment method is invalid or expired",
+          "details": {
+            "paymentMethod": "card_1234567890abcdef",
+            "reason": "card_expired"
+          }
+        }
+      }
+    },
+    "transaction_history_success": {
+      "status": 200,
+      "description": "Transaction history retrieved successfully",
+      "response": {
+        "data": [
+          {
+            "id": "tx-123e4567-e89b-12d3-a456-426614174000",
+            "userId": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "ADD",
+            "amount": 50.00,
+            "description": "Credit purchase - $50.00",
+            "status": "COMPLETED",
+            "metadata": {
+              "paymentMethod": "card_1234567890abcdef",
+              "paymentIntentId": "pi_1234567890abcdef"
+            },
+            "createdAt": "2025-01-15T10:30:00Z",
+            "updatedAt": "2025-01-15T10:30:05Z"
+          },
+          {
+            "id": "tx-456e7890-e12c-34f5-a678-901234567890",
+            "userId": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "DEDUCT",
+            "amount": 0.05,
+            "description": "AI request - GPT-4 Turbo",
+            "status": "COMPLETED",
+            "requestId": "req-789f0123-f45g-67h8-i901-234567890123",
+            "metadata": {
+              "agent": "agent-gpt4-001",
+              "tokens": 185,
+              "processingTime": 2300
+            },
+            "createdAt": "2025-01-15T09:45:00Z",
+            "updatedAt": "2025-01-15T09:45:02Z"
+          },
+          {
+            "id": "tx-789f0123-f45g-67h8-i901-234567890123",
+            "userId": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "DEDUCT",
+            "amount": 0.04,
+            "description": "AI request - Claude 3 Sonnet",
+            "status": "COMPLETED",
+            "requestId": "req-abc1234d-e56f-78g9-h012-345678901234",
+            "metadata": {
+              "agent": "agent-claude-001",
+              "tokens": 220,
+              "processingTime": 1800
+            },
+            "createdAt": "2025-01-15T08:20:00Z",
+            "updatedAt": "2025-01-15T08:20:01Z"
+          }
+        ],
+        "meta": {
+          "page": 1,
+          "limit": 10,
+          "total": 125,
+          "totalPages": 13
+        }
+      }
+    },
+    "insufficient_credits_for_purchase": {
+      "status": 400,
+      "description": "Minimum credit purchase amount not met",
+      "response": {
+        "error": {
+          "code": "INVALID_AMOUNT",
+          "message": "Credit purchase amount must be between $5.00 and $1,000.00",
+          "details": {
+            "minAmount": 5.00,
+            "maxAmount": 1000.00,
+            "providedAmount": 2.50
+          }
+        }
+      }
+    },
+    "budget_limit_warning": {
+      "status": 200,
+      "description": "Transaction successful but budget limit warning",
+      "response": {
+        "transaction": {
+          "id": "tx-123e4567-e89b-12d3-a456-426614174000",
+          "userId": "123e4567-e89b-12d3-a456-426614174000",
+          "type": "DEDUCT",
+          "amount": 0.05,
+          "description": "AI request - GPT-4 Turbo",
+          "status": "COMPLETED",
+          "createdAt": "2025-01-15T10:30:00Z"
+        },
+        "newBalance": 15.45,
+        "warning": {
+          "type": "BUDGET_LIMIT_APPROACHING",
+          "message": "You have spent 85% of your monthly budget",
+          "details": {
+            "monthlyLimit": 100.00,
+            "monthlySpent": 85.00,
+            "remainingBudget": 15.00
+          }
+        }
+      }
+    },
+    "usage_analytics_success": {
+      "status": 200,
+      "description": "Usage analytics and spending patterns",
+      "response": {
+        "period": {
+          "startDate": "2025-01-01T00:00:00Z",
+          "endDate": "2025-01-15T23:59:59Z",
+          "type": "month"
+        },
+        "summary": {
+          "totalSpent": 24.75,
+          "totalRequests": 495,
+          "averageCostPerRequest": 0.05,
+          "topAgent": {
+            "id": "agent-gpt4-001",
+            "name": "GPT-4 Turbo",
+            "requestCount": 180,
+            "totalCost": 9.00
+          }
+        },
+        "dailyBreakdown": [
+          {
+            "date": "2025-01-15",
+            "requests": 25,
+            "totalCost": 1.45,
+            "averageCost": 0.058
+          },
+          {
+            "date": "2025-01-14",
+            "requests": 32,
+            "totalCost": 1.68,
+            "averageCost": 0.0525
+          }
+        ],
+        "agentUsage": [
+          {
+            "agentId": "agent-gpt4-001",
+            "agentName": "GPT-4 Turbo",
+            "requestCount": 180,
+            "totalCost": 9.00,
+            "percentage": 36.36
+          },
+          {
+            "agentId": "agent-claude-001",
+            "agentName": "Claude 3 Sonnet",
+            "requestCount": 150,
+            "totalCost": 6.00,
+            "percentage": 24.24
+          }
+        ]
+      }
+    },
+    "invoice_generated": {
+      "status": 201,
+      "description": "Invoice generated successfully for enterprise customers",
+      "response": {
+        "invoice": {
+          "id": "inv_1234567890abcdef",
+          "number": "INV-2025-001",
+          "customerId": "cus_enterprise_001",
+          "amount": 500.00,
+          "currency": "usd",
+          "status": "open",
+          "dueDate": "2025-02-15T00:00:00Z",
+          "lineItems": [
+            {
+              "description": "AI Platform Credits - 500 credits",
+              "quantity": 500,
+              "unitPrice": 1.00,
+              "amount": 500.00
+            }
+          ],
+          "createdAt": "2025-01-15T10:30:00Z",
+          "invoiceUrl": "https://invoice.ai-platform.com/inv_1234567890abcdef"
+        }
+      }
+    },
+    "payment_webhook_received": {
+      "status": 200,
+      "description": "Payment webhook processed successfully",
+      "response": {
+        "message": "Webhook processed successfully",
+        "eventType": "payment_intent.succeeded",
+        "processed": true,
+        "creditsAdded": 50.00,
+        "transactionId": "tx-webhook-123456"
+      }
+    }
+  }
+}

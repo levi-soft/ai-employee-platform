@@ -1,0 +1,655 @@
+openapi: 3.0.3
+info:
+  title: AI Employee Platform API
+  description: Comprehensive API documentation for the AI Employee Platform microservices architecture
+  version: 1.0.0
+  contact:
+    name: AI Platform Team
+    email: support@aiplatform.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080/api
+    description: Local development server
+  - url: https://staging-api.aiplatform.com/api
+    description: Staging server
+  - url: https://api.aiplatform.com/api
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  # Authentication Service Endpoints
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      description: Create a new user account with email and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Bad request - validation errors or user already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: User login
+      description: Authenticate user and return JWT tokens
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      description: Generate new access token using refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/profile:
+    get:
+      tags: [Authentication]
+      summary: Get user profile
+      description: Retrieve authenticated user's profile information
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # AI Routing Service Endpoints
+  /ai/agents:
+    get:
+      tags: [AI Routing]
+      summary: List available AI agents
+      description: Retrieve list of all available AI agents and their capabilities
+      parameters:
+        - name: active
+          in: query
+          description: Filter by active status
+          required: false
+          schema:
+            type: boolean
+        - name: provider
+          in: query
+          description: Filter by AI provider
+          required: false
+          schema:
+            type: string
+            enum: [openai, anthropic, google]
+      responses:
+        '200':
+          description: AI agents retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIAgentListResponse'
+
+  /ai/chat:
+    post:
+      tags: [AI Routing]
+      summary: Send chat message to AI agent
+      description: Route chat message to appropriate AI agent and return response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Chat response received
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '402':
+          description: Insufficient credits
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # User Management Service Endpoints
+  /users:
+    get:
+      tags: [User Management]
+      summary: List users
+      description: Retrieve paginated list of users (Admin only)
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: role
+          in: query
+          description: Filter by user role
+          required: false
+          schema:
+            type: string
+            enum: [ADMIN, EMPLOYEE]
+      responses:
+        '200':
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{userId}:
+    get:
+      tags: [User Management]
+      summary: Get user by ID
+      description: Retrieve specific user information
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Billing Service Endpoints
+  /billing/credits:
+    get:
+      tags: [Billing]
+      summary: Get credit balance
+      description: Retrieve current user's credit account information
+      responses:
+        '200':
+          description: Credit information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditAccountResponse'
+
+  /billing/transactions:
+    get:
+      tags: [Billing]
+      summary: Get transaction history
+      description: Retrieve user's transaction history
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: type
+          in: query
+          description: Filter by transaction type
+          required: false
+          schema:
+            type: string
+            enum: [CREDIT, DEBIT]
+      responses:
+        '200':
+          description: Transactions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionListResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for API authentication
+
+  schemas:
+    # Authentication Schemas
+    RegisterRequest:
+      type: object
+      required: [email, password, name]
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+        password:
+          type: string
+          minLength: 8
+          description: User's password (minimum 8 characters)
+        name:
+          type: string
+          minLength: 1
+          description: User's full name
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+        password:
+          type: string
+          description: User's password
+
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          description: JWT refresh token
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            tokens:
+              $ref: '#/components/schemas/TokenPair'
+
+    TokenResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/TokenPair'
+
+    TokenPair:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token
+        refreshToken:
+          type: string
+          description: JWT refresh token
+
+    # User Schemas
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique user identifier
+        email:
+          type: string
+          format: email
+          description: User's email address
+        name:
+          type: string
+          description: User's full name
+        role:
+          type: string
+          enum: [ADMIN, EMPLOYEE]
+          description: User's role in the system
+        isActive:
+          type: boolean
+          description: Whether the user account is active
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+
+    UserProfile:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            creditAccount:
+              $ref: '#/components/schemas/CreditAccount'
+
+    UserListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            users:
+              type: array
+              items:
+                $ref: '#/components/schemas/User'
+            pagination:
+              $ref: '#/components/schemas/PaginationInfo'
+
+    # AI Agent Schemas
+    AIAgent:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique agent identifier
+        name:
+          type: string
+          description: AI agent name
+        provider:
+          type: string
+          enum: [openai, anthropic, google]
+          description: AI service provider
+        model:
+          type: string
+          description: Specific AI model identifier
+        costPerToken:
+          type: number
+          format: float
+          description: Cost per token in credits
+        capabilities:
+          type: array
+          items:
+            type: string
+          description: List of agent capabilities
+        isActive:
+          type: boolean
+          description: Whether the agent is currently available
+
+    AIAgentListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AIAgent'
+
+    ChatRequest:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          description: User's chat message
+        agentId:
+          type: string
+          description: Specific AI agent to use (optional)
+        context:
+          type: object
+          description: Additional context for the conversation
+
+    ChatResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            message:
+              type: string
+              description: AI agent's response
+            agent:
+              $ref: '#/components/schemas/AIAgent'
+            tokensUsed:
+              type: integer
+              description: Number of tokens consumed
+            cost:
+              type: number
+              format: float
+              description: Cost of the request in credits
+
+    # Billing Schemas
+    CreditAccount:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Account identifier
+        userId:
+          type: string
+          description: Associated user ID
+        balance:
+          type: number
+          format: float
+          description: Current credit balance
+        totalEarned:
+          type: number
+          format: float
+          description: Total credits earned
+        totalSpent:
+          type: number
+          format: float
+          description: Total credits spent
+
+    CreditAccountResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/CreditAccount'
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Transaction identifier
+        type:
+          type: string
+          enum: [CREDIT, DEBIT]
+          description: Transaction type
+        amount:
+          type: number
+          format: float
+          description: Transaction amount
+        description:
+          type: string
+          description: Transaction description
+        status:
+          type: string
+          enum: [PENDING, COMPLETED, FAILED]
+          description: Transaction status
+        createdAt:
+          type: string
+          format: date-time
+          description: Transaction timestamp
+
+    TransactionListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            transactions:
+              type: array
+              items:
+                $ref: '#/components/schemas/Transaction'
+            pagination:
+              $ref: '#/components/schemas/PaginationInfo'
+
+    # Common Schemas
+    PaginationInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Current page number
+        limit:
+          type: integer
+          description: Items per page
+        total:
+          type: integer
+          description: Total number of items
+        totalPages:
+          type: integer
+          description: Total number of pages
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code
+        details:
+          type: object
+          description: Additional error details
+
+  responses:
+    UnauthorizedError:
+      description: Authentication information is missing or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ForbiddenError:
+      description: Access denied - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFoundError:
+      description: The requested resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: AI Routing
+    description: AI agent routing and chat functionality
+  - name: User Management
+    description: User management operations
+  - name: Billing
+    description: Credit and transaction management

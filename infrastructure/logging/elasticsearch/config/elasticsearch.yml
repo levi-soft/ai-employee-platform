@@ -1,0 +1,46 @@
+# ======================== Elasticsearch Configuration =========================
+
+cluster.name: ai-platform-cluster
+node.name: ai-platform-node-1
+
+# ---------------------------------- Network -----------------------------------
+network.host: 0.0.0.0
+http.port: 9200
+transport.port: 9300
+
+# --------------------------------- Discovery ----------------------------------
+discovery.type: single-node
+
+# ---------------------------------- Gateway -----------------------------------
+gateway.recover_after_nodes: 1
+
+# ----------------------------------- Memory -----------------------------------
+bootstrap.memory_lock: false
+
+# ---------------------------------- Security ----------------------------------
+xpack.security.enabled: false
+xpack.security.enrollment.enabled: false
+
+# ---------------------------------- Monitoring --------------------------------
+xpack.monitoring.collection.enabled: true
+
+# ---------------------------------- Indexing ----------------------------------
+action.auto_create_index: '+ai-platform-*,+.monitoring-*,+.watches,+.triggered_watches,+.watcher-history-*,+.ml-*,+.kibana*'
+
+# ---------------------------------- Indices -----------------------------------
+index.number_of_shards: 1
+index.number_of_replicas: 0
+
+# ---------------------------------- Logging -----------------------------------
+logger.level: INFO
+logger.org.elasticsearch.transport: WARN
+logger.org.elasticsearch.discovery: WARN
+
+# ---------------------------------- Performance -------------------------------
+thread_pool.write.queue_size: 1000
+thread_pool.search.queue_size: 1000
+
+# ---------------------------------- Custom ------------------------------------
+# AI Platform specific settings
+index.max_result_window: 50000
+search.max_buckets: 65536

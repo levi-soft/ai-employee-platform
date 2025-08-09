@@ -1,0 +1,510 @@
+
+{
+  "dashboard": {
+    "id": null,
+    "title": "AI Performance Monitoring Dashboard",
+    "description": "Detailed performance monitoring for AI routing system with advanced metrics and analytics",
+    "tags": ["ai-performance", "optimization", "analytics"],
+    "timezone": "browser",
+    "refresh": "15s",
+    "schemaVersion": 27,
+    "version": 1,
+    "panels": [
+      {
+        "id": 1,
+        "title": "Performance KPIs",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 24, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "ai_routing_request_duration_seconds{quantile=\"0.95\"} * 1000",
+            "legendFormat": "P95 Latency (ms)"
+          },
+          {
+            "expr": "rate(ai_routing_requests_total[5m]) * 60",
+            "legendFormat": "Throughput (req/min)"
+          },
+          {
+            "expr": "ai_routing_optimization_savings_total",
+            "legendFormat": "Cost Savings ($)"
+          },
+          {
+            "expr": "ai_routing_cache_hit_ratio * 100",
+            "legendFormat": "Cache Hit Rate (%)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {"displayMode": "gradient"},
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "P95 Latency (ms)"},
+              "properties": [
+                {"id": "color", "value": {"mode": "thresholds"}},
+                {"id": "thresholds", "value": {
+                  "steps": [
+                    {"color": "green", "value": 0},
+                    {"color": "yellow", "value": 2000},
+                    {"color": "red", "value": 5000}
+                  ]
+                }},
+                {"id": "unit", "value": "ms"}
+              ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "Cache Hit Rate (%)"},
+              "properties": [
+                {"id": "color", "value": {"mode": "thresholds"}},
+                {"id": "thresholds", "value": {
+                  "steps": [
+                    {"color": "red", "value": 0},
+                    {"color": "yellow", "value": 60},
+                    {"color": "green", "value": 80}
+                  ]
+                }},
+                {"id": "unit", "value": "percent"},
+                {"id": "max", "value": 100}
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 2,
+        "title": "Request Latency Heatmap",
+        "type": "heatmap",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+        "targets": [
+          {
+            "expr": "increase(ai_routing_request_duration_seconds_bucket[1m])",
+            "format": "heatmap",
+            "legendFormat": "{{le}}"
+          }
+        ],
+        "heatmap": {
+          "xBucketSize": "1m",
+          "yBucketSize": "auto"
+        },
+        "yAxes": [
+          {
+            "label": "Response Time (seconds)",
+            "logBase": 2
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Throughput Analysis",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+        "targets": [
+          {
+            "expr": "rate(ai_routing_requests_total[1m])",
+            "legendFormat": "Total Requests/sec"
+          },
+          {
+            "expr": "rate(ai_routing_requests_total[1m]) by (provider)",
+            "legendFormat": "{{provider}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Requests/sec",
+            "min": 0
+          }
+        ],
+        "legend": {
+          "show": true,
+          "values": true,
+          "avg": true,
+          "max": true,
+          "current": true
+        }
+      },
+      {
+        "id": 4,
+        "title": "Provider Performance Comparison",
+        "type": "bargauge",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+        "targets": [
+          {
+            "expr": "avg by (provider) (ai_routing_request_duration_seconds{quantile=\"0.5\"}) * 1000",
+            "legendFormat": "{{provider}} - Median Latency"
+          },
+          {
+            "expr": "avg by (provider) (ai_routing_request_duration_seconds{quantile=\"0.95\"}) * 1000",
+            "legendFormat": "{{provider}} - P95 Latency"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "unit": "ms",
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 1500},
+                {"color": "red", "value": 3000}
+              ]
+            }
+          }
+        },
+        "options": {
+          "orientation": "horizontal",
+          "displayMode": "gradient"
+        }
+      },
+      {
+        "id": 5,
+        "title": "Cost Optimization Metrics",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+        "targets": [
+          {
+            "expr": "rate(ai_routing_cost_total[5m]) * 60",
+            "legendFormat": "Cost/min ($)"
+          },
+          {
+            "expr": "rate(ai_routing_optimization_savings_total[5m]) * 60", 
+            "legendFormat": "Savings/min ($)"
+          },
+          {
+            "expr": "(rate(ai_routing_optimization_savings_total[5m]) / rate(ai_routing_cost_total[5m])) * 100",
+            "legendFormat": "Savings Rate (%)"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Cost ($) / Percentage (%)",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Quality Score Trends",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 22},
+        "targets": [
+          {
+            "expr": "ai_routing_quality_score_avg",
+            "legendFormat": "Overall Quality Score"
+          },
+          {
+            "expr": "ai_routing_quality_score_avg by (provider)",
+            "legendFormat": "{{provider}} Quality"
+          },
+          {
+            "expr": "ai_routing_quality_threshold",
+            "legendFormat": "Quality Threshold"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Quality Score",
+            "min": 0,
+            "max": 10
+          }
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "query": {"queryType": "A", "refId": "A"},
+              "reducer": {"type": "avg", "params": []},
+              "evaluator": {"params": [7], "type": "lt"}
+            }
+          ],
+          "executionErrorState": "alerting",
+          "for": "5m",
+          "frequency": "10s",
+          "handler": 1,
+          "name": "Quality Score Below Threshold",
+          "noDataState": "no_data"
+        }
+      },
+      {
+        "id": 7,
+        "title": "Cache Performance Analysis",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 22},
+        "targets": [
+          {
+            "expr": "rate(ai_routing_cache_hits_total[1m])",
+            "legendFormat": "Cache Hits/sec"
+          },
+          {
+            "expr": "rate(ai_routing_cache_misses_total[1m])",
+            "legendFormat": "Cache Misses/sec"
+          },
+          {
+            "expr": "ai_routing_cache_size_bytes / 1024 / 1024",
+            "legendFormat": "Cache Size (MB)"
+          },
+          {
+            "expr": "ai_routing_cache_evictions_total",
+            "legendFormat": "Total Evictions"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Rate / Size",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Resource Utilization",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 30},
+        "targets": [
+          {
+            "expr": "rate(process_cpu_seconds_total{job=\"ai-routing-service\"}[5m]) * 100",
+            "legendFormat": "CPU Usage (%)"
+          },
+          {
+            "expr": "process_resident_memory_bytes{job=\"ai-routing-service\"} / 1024 / 1024",
+            "legendFormat": "Memory Usage (MB)"
+          },
+          {
+            "expr": "ai_routing_active_connections",
+            "legendFormat": "Active Connections"
+          },
+          {
+            "expr": "ai_routing_queue_size",
+            "legendFormat": "Queue Size"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Usage / Count",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Error Analysis",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 30},
+        "targets": [
+          {
+            "expr": "rate(ai_routing_errors_total[1m]) by (error_type)",
+            "legendFormat": "{{error_type}}"
+          },
+          {
+            "expr": "rate(ai_routing_retries_total[1m])",
+            "legendFormat": "Retries/sec"
+          },
+          {
+            "expr": "rate(ai_routing_fallbacks_total[1m])",
+            "legendFormat": "Fallbacks/sec"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Errors/sec",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Request Size Distribution",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 38},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.5, ai_routing_request_size_bytes_bucket)",
+            "legendFormat": "Median Request Size"
+          },
+          {
+            "expr": "histogram_quantile(0.95, ai_routing_request_size_bytes_bucket)",
+            "legendFormat": "P95 Request Size"
+          },
+          {
+            "expr": "avg(ai_routing_request_tokens_input)",
+            "legendFormat": "Avg Input Tokens"
+          },
+          {
+            "expr": "avg(ai_routing_request_tokens_output)",
+            "legendFormat": "Avg Output Tokens"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Size (bytes) / Tokens",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "SLA Compliance",
+        "type": "singlestat",
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 38},
+        "targets": [
+          {
+            "expr": "(sum(rate(ai_routing_requests_success_total[5m])) / sum(rate(ai_routing_requests_total[5m]))) * 100",
+            "legendFormat": "Availability %"
+          }
+        ],
+        "valueFontSize": "80%",
+        "valueName": "current",
+        "thresholds": "95,99",
+        "colors": ["red", "yellow", "green"],
+        "format": "percent",
+        "gauge": {
+          "show": true,
+          "minValue": 90,
+          "maxValue": 100,
+          "thresholdLabels": false,
+          "thresholdMarkers": true
+        }
+      },
+      {
+        "id": 12,
+        "title": "Response Time SLA",
+        "type": "singlestat",
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 38},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, ai_routing_request_duration_seconds_bucket) * 1000",
+            "legendFormat": "P95 Latency"
+          }
+        ],
+        "valueFontSize": "80%",
+        "valueName": "current",
+        "thresholds": "2000,5000",
+        "colors": ["green", "yellow", "red"],
+        "format": "ms",
+        "gauge": {
+          "show": true,
+          "minValue": 0,
+          "maxValue": 10000,
+          "thresholdLabels": false,
+          "thresholdMarkers": true
+        }
+      },
+      {
+        "id": 13,
+        "title": "Model Performance Comparison",
+        "type": "table",
+        "gridPos": {"h": 10, "w": 24, "x": 0, "y": 46},
+        "targets": [
+          {
+            "expr": "avg by (model) (ai_routing_request_duration_seconds{quantile=\"0.5\"}) * 1000",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          },
+          {
+            "expr": "avg by (model) (ai_routing_quality_score_avg)",
+            "format": "table", 
+            "instant": true,
+            "refId": "B"
+          },
+          {
+            "expr": "sum by (model) (rate(ai_routing_cost_total[1h]))",
+            "format": "table",
+            "instant": true,
+            "refId": "C"
+          },
+          {
+            "expr": "sum by (model) (rate(ai_routing_requests_success_total[1h])) / sum by (model) (rate(ai_routing_requests_total[1h])) * 100",
+            "format": "table",
+            "instant": true,
+            "refId": "D"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "merge",
+            "options": {}
+          },
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {"Time": true, "__name__": true, "job": true, "instance": true},
+              "renameByValue": {
+                "model": "Model",
+                "Value #A": "Avg Latency (ms)", 
+                "Value #B": "Quality Score",
+                "Value #C": "Cost/hour ($)",
+                "Value #D": "Success Rate (%)"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "title": "Real-time Performance Alerts",
+        "type": "logs",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 56},
+        "targets": [
+          {
+            "expr": "{job=\"ai-routing-service\"} |= \"ALERT\" or \"WARNING\" or \"ERROR\"",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showTime": true,
+          "showLabels": true,
+          "sortOrder": "Descending",
+          "wrapLogMessage": true
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m"],
+      "time_options": ["5m", "15m", "1h", "6h", "12h", "24h"]
+    },
+    "annotations": {
+      "list": [
+        {
+          "name": "Performance Alerts",
+          "datasource": "Loki",
+          "iconColor": "red",
+          "enable": true,
+          "expr": "{job=\"ai-routing-service\"} |= \"PERFORMANCE_ALERT\"",
+          "titleFormat": "Performance Alert",
+          "textFormat": "{{.message}}"
+        }
+      ]
+    },
+    "templating": {
+      "list": [
+        {
+          "name": "time_range",
+          "type": "interval",
+          "query": "1m,5m,15m,30m,1h,6h,12h,1d",
+          "current": {"text": "5m", "value": "5m"},
+          "refresh": 2
+        },
+        {
+          "name": "provider",
+          "type": "query",
+          "query": "label_values(ai_routing_requests_total, provider)",
+          "refresh": 1,
+          "includeAll": true,
+          "allValue": ".*"
+        },
+        {
+          "name": "quality_threshold",
+          "type": "custom",
+          "query": "6,7,8,9",
+          "current": {"text": "7", "value": "7"}
+        }
+      ]
+    }
+  },
+  "overwrite": false
+}

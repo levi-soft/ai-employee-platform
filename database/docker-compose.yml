@@ -1,0 +1,61 @@
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ai_platform_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ai_employee_platform
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ai_employee_platform"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ai_platform_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: ai_platform_redis_commander
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379
+      HTTP_USER: admin
+      HTTP_PASSWORD: admin
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    name: ai_platform_network
+    driver: bridge

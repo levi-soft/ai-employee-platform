@@ -1,0 +1,260 @@
+
+{
+  "ai_routing": {
+    "successful_text_generation": {
+      "status": 200,
+      "description": "Successful AI text generation request",
+      "response": {
+        "id": "req-123e4567-e89b-12d3-a456-426614174000",
+        "selectedAgent": {
+          "id": "agent-gpt4-001",
+          "name": "GPT-4 Turbo",
+          "provider": "openai",
+          "model": "gpt-4-turbo-preview",
+          "description": "Most capable GPT model for complex reasoning tasks",
+          "capabilities": ["text-generation", "code-generation", "analysis"],
+          "costPerRequest": 0.05,
+          "isActive": true
+        },
+        "prompt": "Write a professional email about project status update for a team meeting.",
+        "response": "Subject: Project Status Update - Week Ending January 15, 2025\n\nDear Team,\n\nI hope this email finds you well. I wanted to provide you with a comprehensive update on our current project status ahead of our upcoming team meeting.\n\n**Project Progress:**\n- Backend API development: 85% complete\n- Frontend user interface: 70% complete\n- Database optimization: 90% complete\n- Testing and QA: 60% complete\n\n**Key Achievements This Week:**\n- Successfully implemented user authentication system\n- Completed integration with third-party payment gateway\n- Resolved 12 critical bugs identified during testing\n\n**Upcoming Milestones:**\n- User acceptance testing begins Monday, January 20th\n- Beta release scheduled for January 25th\n- Final production deployment targeted for February 1st\n\n**Challenges and Solutions:**\nWe encountered some performance issues with the database queries, but our team has successfully optimized them, resulting in 40% faster response times.\n\n**Action Items:**\n- Complete remaining frontend components by January 22nd\n- Finalize documentation and user guides by January 24th\n- Conduct security audit before beta release\n\nPlease let me know if you have any questions or concerns. I look forward to discussing these updates in detail during our meeting.\n\nBest regards,\n[Your Name]",
+        "tokenUsed": 185,
+        "totalCost": 0.05,
+        "processingTime": 2300,
+        "alternatives": [
+          {
+            "agent": {
+              "id": "agent-claude-001",
+              "name": "Claude 3 Sonnet",
+              "provider": "anthropic",
+              "model": "claude-3-sonnet-20240229"
+            },
+            "estimatedCost": 0.04,
+            "score": 85.2,
+            "reason": "Good alternative with similar capabilities at lower cost"
+          },
+          {
+            "agent": {
+              "id": "agent-gpt35-001",
+              "name": "GPT-3.5 Turbo",
+              "provider": "openai",
+              "model": "gpt-3.5-turbo"
+            },
+            "estimatedCost": 0.02,
+            "score": 75.8,
+            "reason": "Budget-friendly option with good text generation"
+          }
+        ]
+      }
+    },
+    "successful_code_generation": {
+      "status": 200,
+      "description": "Successful AI code generation request",
+      "response": {
+        "id": "req-456e7890-e12c-34f5-a678-901234567890",
+        "selectedAgent": {
+          "id": "agent-gpt4-001",
+          "name": "GPT-4 Turbo",
+          "provider": "openai",
+          "model": "gpt-4-turbo-preview",
+          "description": "Most capable GPT model for complex reasoning tasks",
+          "capabilities": ["text-generation", "code-generation", "analysis"],
+          "costPerRequest": 0.08,
+          "isActive": true
+        },
+        "prompt": "Create a Python function to calculate the Fibonacci sequence up to n terms with error handling and documentation.",
+        "response": "```python\ndef fibonacci_sequence(n):\n    \"\"\"\n    Generate Fibonacci sequence up to n terms.\n    \n    The Fibonacci sequence is a series of numbers where each number is the sum\n    of the two preceding ones, usually starting with 0 and 1.\n    \n    Args:\n        n (int): Number of terms to generate. Must be a positive integer.\n        \n    Returns:\n        list: List containing the Fibonacci sequence up to n terms.\n        \n    Raises:\n        TypeError: If n is not an integer.\n        ValueError: If n is negative or zero.\n        \n    Examples:\n        >>> fibonacci_sequence(5)\n        [0, 1, 1, 2, 3]\n        \n        >>> fibonacci_sequence(1)\n        [0]\n        \n        >>> fibonacci_sequence(8)\n        [0, 1, 1, 2, 3, 5, 8, 13]\n    \"\"\"\n    # Input validation\n    if not isinstance(n, int):\n        raise TypeError(f\"Expected integer, got {type(n).__name__}\")\n    \n    if n <= 0:\n        raise ValueError(\"Number of terms must be a positive integer\")\n    \n    # Handle edge cases\n    if n == 1:\n        return [0]\n    elif n == 2:\n        return [0, 1]\n    \n    # Generate Fibonacci sequence\n    sequence = [0, 1]\n    \n    for i in range(2, n):\n        next_term = sequence[i-1] + sequence[i-2]\n        sequence.append(next_term)\n    \n    return sequence\n\n\n# Example usage and testing\nif __name__ == \"__main__\":\n    try:\n        # Test with different values\n        print(\"Fibonacci sequence (10 terms):\", fibonacci_sequence(10))\n        print(\"Fibonacci sequence (1 term):\", fibonacci_sequence(1))\n        print(\"Fibonacci sequence (15 terms):\", fibonacci_sequence(15))\n        \n        # Test error handling\n        fibonacci_sequence(-1)  # This will raise ValueError\n        \n    except (TypeError, ValueError) as e:\n        print(f\"Error: {e}\")\n```",
+        "tokenUsed": 320,
+        "totalCost": 0.08,
+        "processingTime": 3100,
+        "alternatives": [
+          {
+            "agent": {
+              "id": "agent-claude-001",
+              "name": "Claude 3 Sonnet",
+              "provider": "anthropic",
+              "model": "claude-3-sonnet-20240229"
+            },
+            "estimatedCost": 0.06,
+            "score": 88.5,
+            "reason": "Excellent code generation capabilities with detailed documentation"
+          }
+        ]
+      }
+    },
+    "insufficient_credits": {
+      "status": 402,
+      "description": "User has insufficient credits for the request",
+      "response": {
+        "error": {
+          "code": "INSUFFICIENT_CREDITS",
+          "message": "Insufficient credits for this request",
+          "details": {
+            "required": 0.05,
+            "available": 0.02,
+            "shortfall": 0.03
+          }
+        }
+      }
+    },
+    "validation_error": {
+      "status": 400,
+      "description": "Invalid request parameters",
+      "response": {
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "Invalid request parameters",
+          "details": {
+            "prompt": "Prompt is required and must not be empty",
+            "capabilities": "At least one capability is required",
+            "maxCost": "maxCost must be a positive number"
+          }
+        }
+      }
+    },
+    "no_agents_available": {
+      "status": 503,
+      "description": "No suitable agents available for the request",
+      "response": {
+        "error": {
+          "code": "NO_AGENTS_AVAILABLE",
+          "message": "No AI agents are currently available that match your requirements",
+          "details": {
+            "requestedCapabilities": ["specialized-task"],
+            "maxCost": 0.01,
+            "reason": "All agents with required capabilities exceed the maximum cost limit"
+          }
+        }
+      }
+    },
+    "agents_list_success": {
+      "status": 200,
+      "description": "List of available AI agents",
+      "response": {
+        "data": [
+          {
+            "id": "agent-gpt4-001",
+            "name": "GPT-4 Turbo",
+            "provider": "openai",
+            "model": "gpt-4-turbo-preview",
+            "description": "Most capable GPT model for complex reasoning tasks",
+            "capabilities": ["text-generation", "code-generation", "analysis"],
+            "costPerRequest": 0.05,
+            "isActive": true
+          },
+          {
+            "id": "agent-claude-001",
+            "name": "Claude 3 Sonnet",
+            "provider": "anthropic",
+            "model": "claude-3-sonnet-20240229",
+            "description": "Anthropic's advanced AI model for thoughtful, nuanced responses",
+            "capabilities": ["text-generation", "analysis", "creative-writing"],
+            "costPerRequest": 0.04,
+            "isActive": true
+          },
+          {
+            "id": "agent-gemini-001",
+            "name": "Gemini Pro",
+            "provider": "google",
+            "model": "gemini-1.0-pro",
+            "description": "Google's powerful multimodal AI model",
+            "capabilities": ["text-generation", "image-analysis", "code-generation"],
+            "costPerRequest": 0.03,
+            "isActive": true
+          },
+          {
+            "id": "agent-gpt35-001",
+            "name": "GPT-3.5 Turbo",
+            "provider": "openai",
+            "model": "gpt-3.5-turbo",
+            "description": "Fast and efficient AI model for general tasks",
+            "capabilities": ["text-generation", "basic-analysis"],
+            "costPerRequest": 0.02,
+            "isActive": true
+          }
+        ],
+        "total": 4
+      }
+    },
+    "request_history_success": {
+      "status": 200,
+      "description": "User's AI request history",
+      "response": {
+        "data": [
+          {
+            "id": "req-123e4567-e89b-12d3-a456-426614174000",
+            "selectedAgent": {
+              "id": "agent-gpt4-001",
+              "name": "GPT-4 Turbo",
+              "provider": "openai",
+              "model": "gpt-4-turbo-preview"
+            },
+            "prompt": "Write a professional email about project status...",
+            "response": "Subject: Project Status Update...",
+            "tokenUsed": 185,
+            "totalCost": 0.05,
+            "processingTime": 2300,
+            "createdAt": "2025-01-15T10:30:00Z"
+          },
+          {
+            "id": "req-456e7890-e12c-34f5-a678-901234567890",
+            "selectedAgent": {
+              "id": "agent-claude-001",
+              "name": "Claude 3 Sonnet",
+              "provider": "anthropic",
+              "model": "claude-3-sonnet-20240229"
+            },
+            "prompt": "Explain the concept of machine learning...",
+            "response": "Machine learning is a subset of artificial intelligence...",
+            "tokenUsed": 220,
+            "totalCost": 0.04,
+            "processingTime": 1800,
+            "createdAt": "2025-01-15T09:15:00Z"
+          }
+        ],
+        "meta": {
+          "page": 1,
+          "limit": 10,
+          "total": 25,
+          "totalPages": 3
+        }
+      }
+    },
+    "request_too_large": {
+      "status": 413,
+      "description": "Request prompt exceeds maximum length",
+      "response": {
+        "error": {
+          "code": "REQUEST_TOO_LARGE",
+          "message": "Request prompt exceeds maximum allowed length",
+          "details": {
+            "maxLength": 10000,
+            "actualLength": 15000,
+            "excess": 5000
+          }
+        }
+      }
+    },
+    "agent_maintenance": {
+      "status": 503,
+      "description": "Selected agent is under maintenance",
+      "response": {
+        "error": {
+          "code": "AGENT_MAINTENANCE",
+          "message": "The selected AI agent is currently under maintenance",
+          "details": {
+            "agentId": "agent-gpt4-001",
+            "estimatedRestoreTime": "2025-01-15T14:00:00Z",
+            "alternatives": [
+              {
+                "agentId": "agent-claude-001",
+                "name": "Claude 3 Sonnet",
+                "estimatedCost": 0.04
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

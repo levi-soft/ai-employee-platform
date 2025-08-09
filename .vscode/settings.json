@@ -1,0 +1,75 @@
+
+{
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "typescript.suggest.autoImports": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "eslint.workingDirectories": [
+    "./apps/admin-dashboard",
+    "./apps/employee-portal",
+    "./services/auth-service",
+    "./services/ai-routing-service",
+    "./services/billing-service",
+    "./services/user-management-service",
+    "./services/plugin-manager-service",
+    "./services/notification-service",
+    "./packages/shared-types",
+    "./packages/shared-utils",
+    "./packages/ui-components",
+    "./packages/api-client"
+  ],
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.next": true,
+    "**/coverage": true,
+    "**/.turbo": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.next": true,
+    "**/coverage": true,
+    "**/.turbo": true,
+    "**/yarn.lock": true,
+    "**/package-lock.json": true
+  },
+  "emmet.includeLanguages": {
+    "typescript": "html",
+    "typescriptreact": "html"
+  },
+  "tailwindCSS.includeLanguages": {
+    "typescript": "html",
+    "typescriptreact": "html"
+  },
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+    ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+  ],
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "tailwindCSS.emmetCompletions": true,
+  "json.schemas": [
+    {
+      "fileMatch": [
+        "package.json"
+      ],
+      "url": "https://json.schemastore.org/package.json"
+    },
+    {
+      "fileMatch": [
+        "tsconfig.json",
+        "tsconfig.*.json"
+      ],
+      "url": "https://json.schemastore.org/tsconfig.json"
+    }
+  ],
+  "debug.node.autoAttach": "on"
+}

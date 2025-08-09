@@ -1,0 +1,275 @@
+# AI Employee Platform Security Configuration
+# This file defines security policies and configurations across the platform
+
+security:
+  # Global security settings
+  global:
+    # Enable security features
+    enableSecurityHeaders: true
+    enableRateLimiting: true
+    enableInputValidation: true
+    enableAuditLogging: true
+
+    # Environment-specific settings
+    environment: ${NODE_ENV:-development}
+
+    # Allowed origins for CORS
+    allowedOrigins:
+      production:
+        - 'https://ai-platform.com'
+        - 'https://admin.ai-platform.com'
+        - 'https://api.ai-platform.com'
+      development:
+        - 'http://localhost:3000'
+        - 'http://localhost:3001'
+        - 'http://localhost:8080'
+        - 'http://127.0.0.1:3000'
+
+  # Authentication security
+  authentication:
+    # JWT settings
+    jwt:
+      accessTokenExpiry: '15m'
+      refreshTokenExpiry: '7d'
+      algorithm: 'HS256'
+      issuer: 'ai-platform'
+
+    # Password requirements
+    password:
+      minLength: 8
+      maxLength: 128
+      requireUppercase: true
+      requireLowercase: true
+      requireNumbers: true
+      requireSpecialChars: true
+      forbiddenPasswords:
+        - 'password'
+        - '123456'
+        - 'qwerty'
+        - 'admin'
+        - 'guest'
+
+    # Account lockout
+    accountLockout:
+      maxFailedAttempts: 5
+      lockoutDuration: '15m'
+      resetAfterSuccess: true
+
+  # Rate limiting configuration
+  rateLimiting:
+    # Global rate limits
+    global:
+      windowMs: 900000 # 15 minutes
+      maxRequests: 1000
+
+    # Service-specific rate limits
+    services:
+      auth:
+        login:
+          windowMs: 900000 # 15 minutes
+          maxRequests: 5
+        register:
+          windowMs: 3600000 # 1 hour
+          maxRequests: 3
+        refresh:
+          windowMs: 300000 # 5 minutes
+          maxRequests: 10
+
+      aiRouting:
+        requests:
+          windowMs: 900000 # 15 minutes
+          maxRequests: 20
+        highCost:
+          windowMs: 3600000 # 1 hour
+          maxRequests: 50
+
+      userManagement:
+        general:
+          windowMs: 900000 # 15 minutes
+          maxRequests: 100
+        fileUpload:
+          windowMs: 3600000 # 1 hour
+          maxRequests: 20
+
+  # Input validation rules
+  inputValidation:
+    # Maximum sizes
+    maxRequestSize: 10485760 # 10MB
+    maxFileSize: 52428800 # 50MB
+    maxFiles: 5
+
+    # Allowed file types
+    allowedMimeTypes:
+      - 'image/jpeg'
+      - 'image/png'
+      - 'image/gif'
+      - 'image/webp'
+      - 'application/pdf'
+      - 'text/plain'
+      - 'text/csv'
+      - 'application/json'
+
+    # Content filtering
+    contentFiltering:
+      enableXssFiltering: true
+      enableSqlInjectionFiltering: true
+      enableMaliciousPromptFiltering: true
+
+    # Malicious patterns (regex)
+    maliciousPatterns:
+      sql:
+        - "\\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\\b"
+        - "(--|#|/\\*|\\*/)"
+        - "\\b(OR|AND)\\s+[\\w\\s]*=[\\w\\s]*"
+        - "('|(\\\\x27)|(\\\\x2D\\\\x2D))"
+      xss:
+        - '<script[^>]*>.*?</script>'
+        - 'javascript:'
+        - "on\\w+\\s*="
+        - "eval\\s*\\("
+      prompt:
+        - "ignore\\s+previous\\s+instructions"
+        - "system\\s*:\\s*you\\s+are"
+        - "forget\\s+everything"
+        - 'jailbreak'
+
+  # Security headers configuration
+  headers:
+    # Content Security Policy
+    contentSecurityPolicy:
+      defaultSrc: "'self'"
+      scriptSrc: "'self' 'unsafe-inline' 'unsafe-eval'"
+      styleSrc: "'self' 'unsafe-inline'"
+      imgSrc: "'self' data: https:"
+      fontSrc: "'self' data:"
+      connectSrc: "'self' https://api.openai.com https://api.anthropic.com"
+      frameSrc: "'none'"
+      objectSrc: "'none'"
+
+    # HTTP Strict Transport Security
+    hsts:
+      maxAge: 31536000
+      includeSubDomains: true
+      preload: true
+
+    # Other security headers
+    xFrameOptions: 'DENY'
+    xContentTypeOptions: 'nosniff'
+    xXssProtection: '1; mode=block'
+    referrerPolicy: 'strict-origin-when-cross-origin'
+
+  # CSRF protection
+  csrf:
+    enabled: false # Disabled for JWT-based API
+    secret: ${CSRF_SECRET}
+    cookieName: 'csrf-token'
+    headerName: 'x-csrf-token'
+
+  # Audit logging
+  auditLogging:
+    enabled: true
+    events:
+      - 'authentication'
+      - 'authorization'
+      - 'data_access'
+      - 'data_modification'
+      - 'security_events'
+      - 'rate_limit_violations'
+      - 'failed_requests'
+
+    # Log retention
+    retention:
+      securityLogs: '90d'
+      auditLogs: '1y'
+      accessLogs: '30d'
+
+  # Encryption settings
+  encryption:
+    # Algorithms
+    hashAlgorithm: 'bcrypt'
+    bcryptRounds: 12
+
+    # Field encryption (for sensitive data at rest)
+    fieldEncryption:
+      algorithm: 'aes-256-gcm'
+      keyRotationInterval: '90d'
+
+  # Network security
+  network:
+    # IP whitelisting (for admin endpoints)
+    ipWhitelist:
+      admin:
+        - '127.0.0.1'
+        - '::1'
+        # Add production admin IPs here
+
+    # DDoS protection
+    ddosProtection:
+      enabled: true
+      connectionLimit: 100
+      requestLimit: 1000
+      banDuration: '1h'
+
+  # API security
+  api:
+    # Version control
+    minApiVersion: 'v1.0'
+    deprecationWarning: true
+
+    # Request validation
+    strictValidation: true
+    allowUnknownFields: false
+
+    # Response filtering
+    filterSensitiveData: true
+
+  # Monitoring and alerting
+  monitoring:
+    # Security event thresholds
+    alertThresholds:
+      failedLogins: 10
+      rateLimitViolations: 50
+      maliciousRequests: 5
+
+    # Alert destinations
+    alerts:
+      email: ${SECURITY_ALERT_EMAIL}
+      webhook: ${SECURITY_WEBHOOK_URL}
+
+  # Compliance settings
+  compliance:
+    # Data protection
+    gdpr:
+      enabled: true
+      dataRetentionPeriod: '2y'
+      anonymizationDelay: '30d'
+
+    # Security standards
+    standards:
+      - 'OWASP_ASVS_4.0'
+      - 'NIST_CSF'
+      - 'ISO_27001'
+
+# Environment-specific overrides
+environments:
+  development:
+    rateLimiting:
+      global:
+        maxRequests: 10000 # More lenient for development
+    inputValidation:
+      maxRequestSize: 52428800 # 50MB for development
+    headers:
+      contentSecurityPolicy:
+        scriptSrc: "'self' 'unsafe-inline' 'unsafe-eval' localhost:*"
+        connectSrc: "'self' ws: wss: localhost:*"
+
+  production:
+    rateLimiting:
+      global:
+        maxRequests: 100 # More restrictive for production
+    headers:
+      contentSecurityPolicy:
+        scriptSrc: "'self'" # No unsafe-inline in production
+    monitoring:
+      alertThresholds:
+        failedLogins: 5 # More sensitive in production

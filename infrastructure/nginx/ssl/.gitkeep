@@ -1,0 +1,13 @@
+
+# SSL certificates directory
+# This directory will contain SSL certificates generated at runtime
+# 
+# Files generated:
+# - server.crt: Main SSL certificate
+# - server.key: Private key  
+# - default.crt: Default certificate for unknown hosts
+# - default.key: Default private key
+# - dhparam.pem: Diffie-Hellman parameters
+#
+# Note: These files are generated automatically by the container
+# and should not be committed to version control

@@ -1,0 +1,1187 @@
+
+{
+	"info": {
+		"_postman_id": "ai-employee-platform-api",
+		"name": "AI Employee Platform API Collection",
+		"description": "Complete API collection for AI Employee Platform with all endpoints, authentication, and examples.\n\n## Getting Started\n\n1. Set environment variables in Postman:\n   - `baseUrl`: API base URL (e.g., http://localhost:8080/v1)\n   - `accessToken`: JWT access token from login\n   - `refreshToken`: JWT refresh token from login\n\n2. Run the Authentication > Login request first to get tokens\n3. Tokens will be automatically set in environment variables\n\n## Authentication\n\nMost requests require authentication. The collection automatically includes the Bearer token in requests that need it.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{accessToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global pre-request script",
+					"if (!pm.environment.get('baseUrl')) {",
+					"    pm.environment.set('baseUrl', 'http://localhost:8080/v1');",
+					"}",
+					"",
+					"// Add request ID header for tracing",
+					"pm.request.headers.add({",
+					"    key: 'X-Request-ID',",
+					"    value: pm.variables.replaceIn('{{$randomUUID}}')  ",
+					"});"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global test script",
+					"pm.test('Response time is less than 5000ms', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+					"});",
+					"",
+					"pm.test('Response has proper headers', function () {",
+					"    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080/v1",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Registration successful', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response contains user and tokens', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('user');",
+									"    pm.expect(responseJson).to.have.property('tokens');",
+									"    pm.expect(responseJson.tokens).to.have.property('accessToken');",
+									"    pm.expect(responseJson.tokens).to.have.property('refreshToken');",
+									"});",
+									"",
+									"// Store tokens for future use",
+									"if (pm.response.code === 201) {",
+									"    const responseJson = pm.response.json();",
+									"    pm.environment.set('accessToken', responseJson.tokens.accessToken);",
+									"    pm.environment.set('refreshToken', responseJson.tokens.refreshToken);",
+									"    pm.environment.set('userId', responseJson.user.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"{{$randomFullName}}\",\n    \"email\": \"{{$randomEmail}}\",\n    \"password\": \"SecurePassword123!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						},
+						"description": "Register a new user account"
+					}
+				},
+				{
+					"name": "Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Login successful', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response contains user and tokens', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('user');",
+									"    pm.expect(responseJson).to.have.property('tokens');",
+									"    pm.expect(responseJson.tokens).to.have.property('accessToken');",
+									"    pm.expect(responseJson.tokens).to.have.property('refreshToken');",
+									"});",
+									"",
+									"// Store tokens for future use",
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    pm.environment.set('accessToken', responseJson.tokens.accessToken);",
+									"    pm.environment.set('refreshToken', responseJson.tokens.refreshToken);",
+									"    pm.environment.set('userId', responseJson.user.id);",
+									"    pm.environment.set('userEmail', responseJson.user.email);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"john@doe.com\",\n    \"password\": \"johndoe123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Login with email and password"
+					}
+				},
+				{
+					"name": "Get User Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Profile retrieved successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response contains user data', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('id');",
+									"    pm.expect(responseJson).to.have.property('email');",
+									"    pm.expect(responseJson).to.have.property('role');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"profile"
+							]
+						},
+						"description": "Get current user profile information"
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Token refresh successful', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response contains new access token', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('accessToken');",
+									"    pm.expect(responseJson).to.have.property('expiresIn');",
+									"});",
+									"",
+									"// Update access token",
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    pm.environment.set('accessToken', responseJson.accessToken);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/refresh",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Refresh access token using refresh token"
+					}
+				},
+				{
+					"name": "Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Logout successful', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Clear tokens",
+									"pm.environment.unset('accessToken');",
+									"pm.environment.unset('refreshToken');"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"logout"
+							]
+						},
+						"description": "Logout current user and invalidate tokens"
+					}
+				}
+			],
+			"description": "Authentication and user session management endpoints"
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "List Users",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Users retrieved successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has data and meta', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('data');",
+									"    pm.expect(responseJson).to.have.property('meta');",
+									"    pm.expect(responseJson.data).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users?page=1&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "search",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "role",
+									"value": "",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get paginated list of users with optional filtering"
+					}
+				},
+				{
+					"name": "Get User by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('User retrieved successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response contains user data', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('id');",
+									"    pm.expect(responseJson).to.have.property('email');",
+									"    pm.expect(responseJson).to.have.property('role');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/{{userId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}"
+							]
+						},
+						"description": "Get specific user information by ID"
+					}
+				},
+				{
+					"name": "Create User (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('User created successfully', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response contains new user data', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('id');",
+									"    pm.expect(responseJson).to.have.property('email');",
+									"    pm.expect(responseJson).to.have.property('role');",
+									"});",
+									"",
+									"// Store new user ID for cleanup",
+									"if (pm.response.code === 201) {",
+									"    const responseJson = pm.response.json();",
+									"    pm.environment.set('newUserId', responseJson.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"{{$randomFullName}}\",\n    \"email\": \"{{$randomEmail}}\",\n    \"password\": \"SecurePassword123!\",\n    \"role\": \"EMPLOYEE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Create new user (Admin only)"
+					}
+				},
+				{
+					"name": "Update User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('User updated successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response contains updated user data', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('id');",
+									"    pm.expect(responseJson).to.have.property('updatedAt');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"{{$randomFullName}} (Updated)\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/{{userId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}"
+							]
+						},
+						"description": "Update user information"
+					}
+				}
+			],
+			"description": "User management endpoints"
+		},
+		{
+			"name": "AI Routing",
+			"item": [
+				{
+					"name": "List AI Agents",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Agents retrieved successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response contains agent data', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('data');",
+									"    pm.expect(responseJson.data).to.be.an('array');",
+									"});",
+									"",
+									"// Store first agent ID for routing test",
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.data && responseJson.data.length > 0) {",
+									"        pm.environment.set('agentId', responseJson.data[0].id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/ai/agents",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"ai",
+								"agents"
+							],
+							"query": [
+								{
+									"key": "provider",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "capability",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "maxCost",
+									"value": "",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get list of available AI agents"
+					}
+				},
+				{
+					"name": "Route AI Request - Text Generation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('AI request processed successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response contains AI response data', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('id');",
+									"    pm.expect(responseJson).to.have.property('selectedAgent');",
+									"    pm.expect(responseJson).to.have.property('response');",
+									"    pm.expect(responseJson).to.have.property('totalCost');",
+									"});",
+									"",
+									"// Store request ID for history",
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    pm.environment.set('lastRequestId', responseJson.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"prompt\": \"Write a professional email about project status update for a team meeting.\",\n    \"capabilities\": [\"text-generation\"],\n    \"priority\": \"normal\",\n    \"maxCost\": 1.00,\n    \"metadata\": {\n        \"requestType\": \"email_generation\",\n        \"context\": \"business_communication\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/ai/route",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"ai",
+								"route"
+							]
+						},
+						"description": "Submit AI request for text generation"
+					}
+				},
+				{
+					"name": "Route AI Request - Code Generation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('AI request processed successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response contains code generation result', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('response');",
+									"    pm.expect(responseJson.response).to.include('function');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"prompt\": \"Create a Python function to calculate the Fibonacci sequence up to n terms with error handling and documentation.\",\n    \"capabilities\": [\"code-generation\"],\n    \"priority\": \"high\",\n    \"maxCost\": 2.00,\n    \"metadata\": {\n        \"requestType\": \"code_generation\",\n        \"language\": \"python\",\n        \"complexity\": \"medium\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/ai/route",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"ai",
+								"route"
+							]
+						},
+						"description": "Submit AI request for code generation"
+					}
+				},
+				{
+					"name": "Get AI Request History",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Request history retrieved successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has data and meta', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('data');",
+									"    pm.expect(responseJson).to.have.property('meta');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/ai/requests?page=1&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"ai",
+								"requests"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "agentId",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "fromDate",
+									"value": "",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get user's AI request history"
+					}
+				}
+			],
+			"description": "AI routing and request management endpoints"
+		},
+		{
+			"name": "Billing",
+			"item": [
+				{
+					"name": "Get Credit Balance",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Credit balance retrieved successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response contains credit account data', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('userId');",
+									"    pm.expect(responseJson).to.have.property('balance');",
+									"    pm.expect(responseJson).to.have.property('totalEarned');",
+									"    pm.expect(responseJson).to.have.property('totalSpent');",
+									"});",
+									"",
+									"// Store current balance",
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    pm.environment.set('currentBalance', responseJson.balance);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/billing/credits",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"billing",
+								"credits"
+							]
+						},
+						"description": "Get current credit account information"
+					}
+				},
+				{
+					"name": "Add Credits",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Credits added successfully', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response contains transaction and new balance', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('transaction');",
+									"    pm.expect(responseJson).to.have.property('newBalance');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"amount\": 25.00,\n    \"paymentMethod\": \"card_test_payment_method\",\n    \"description\": \"Credit purchase via API test - $25\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/billing/credits",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"billing",
+								"credits"
+							]
+						},
+						"description": "Add credits to user's account"
+					}
+				},
+				{
+					"name": "Get Transaction History",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Transaction history retrieved successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has data and meta', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('data');",
+									"    pm.expect(responseJson).to.have.property('meta');",
+									"    pm.expect(responseJson.data).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/billing/transactions?page=1&limit=10&type=ADD",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"billing",
+								"transactions"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "type",
+									"value": "ADD"
+								},
+								{
+									"key": "status",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "fromDate",
+									"value": "",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get user's transaction history"
+					}
+				}
+			],
+			"description": "Billing and credit management endpoints"
+		},
+		{
+			"name": "Plugins",
+			"item": [
+				{
+					"name": "Browse Plugin Marketplace",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Plugins retrieved successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has data and meta', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('data');",
+									"    pm.expect(responseJson).to.have.property('meta');",
+									"    pm.expect(responseJson.data).to.be.an('array');",
+									"});",
+									"",
+									"// Store first plugin ID for details test",
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.data && responseJson.data.length > 0) {",
+									"        pm.environment.set('pluginId', responseJson.data[0].id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/plugins?page=1&limit=10&sortBy=rating&sortOrder=desc",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"plugins"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "search",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "category",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "sortBy",
+									"value": "rating"
+								},
+								{
+									"key": "sortOrder",
+									"value": "desc"
+								}
+							]
+						},
+						"description": "Browse available plugins in marketplace"
+					}
+				},
+				{
+					"name": "Get Plugin Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Plugin details retrieved successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response contains plugin data', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('id');",
+									"    pm.expect(responseJson).to.have.property('name');",
+									"    pm.expect(responseJson).to.have.property('version');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/plugins/{{pluginId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"plugins",
+								"{{pluginId}}"
+							]
+						},
+						"description": "Get detailed information about a specific plugin"
+					}
+				},
+				{
+					"name": "Install Plugin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Plugin installation result', function () {",
+									"    // Accept both success (201) and already installed (400)",
+									"    pm.expect([201, 400]).to.include(pm.response.code);",
+									"});",
+									"",
+									"if (pm.response.code === 201) {",
+									"    pm.test('Plugin installed successfully', function () {",
+									"        const responseJson = pm.response.json();",
+									"        pm.expect(responseJson).to.have.property('message');",
+									"        pm.expect(responseJson).to.have.property('installedAt');",
+									"    });",
+									"} else if (pm.response.code === 400) {",
+									"    pm.test('Plugin already installed or incompatible', function () {",
+									"        const responseJson = pm.response.json();",
+									"        pm.expect(responseJson).to.have.property('error');",
+									"    });",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/plugins/{{pluginId}}/install",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"plugins",
+								"{{pluginId}}",
+								"install"
+							]
+						},
+						"description": "Install a plugin for the current user"
+					}
+				}
+			],
+			"description": "Plugin marketplace and management endpoints"
+		},
+		{
+			"name": "Notifications",
+			"item": [
+				{
+					"name": "Get Notification Preferences",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Notification preferences retrieved successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is array of preferences', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/notifications/preferences",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"notifications",
+								"preferences"
+							]
+						},
+						"description": "Get user's notification preferences"
+					}
+				},
+				{
+					"name": "Update Notification Preferences",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Notification preferences updated successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response contains success message', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('message');",
+									"    pm.expect(responseJson).to.have.property('updated');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"userId\": \"{{userId}}\",\n        \"type\": \"credit_low\",\n        \"channels\": {\n            \"email\": true,\n            \"push\": true,\n            \"sms\": false\n        },\n        \"frequency\": \"immediate\",\n        \"quietHours\": {\n            \"enabled\": true,\n            \"startTime\": \"22:00\",\n            \"endTime\": \"08:00\",\n            \"timezone\": \"America/New_York\"\n        }\n    },\n    {\n        \"userId\": \"{{userId}}\",\n        \"type\": \"ai_request_complete\",\n        \"channels\": {\n            \"email\": false,\n            \"push\": true,\n            \"sms\": false\n        },\n        \"frequency\": \"immediate\"\n    }\n]"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/notifications/preferences",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"notifications",
+								"preferences"
+							]
+						},
+						"description": "Update user's notification preferences"
+					}
+				},
+				{
+					"name": "Get Notification History",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Notification history retrieved successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has data and meta', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('data');",
+									"    pm.expect(responseJson).to.have.property('meta');",
+									"    pm.expect(responseJson.data).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/notifications/history?page=1&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"notifications",
+								"history"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "type",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "status",
+									"value": "",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get user's notification history"
+					}
+				}
+			],
+			"description": "Notification system and preferences endpoints"
+		}
+	]
+}

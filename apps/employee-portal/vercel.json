@@ -1,0 +1,51 @@
+
+{
+  "name": "ai-platform-employee-portal",
+  "version": 2,
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
+  "devCommand": "npm run dev",
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://api.ai-platform.com",
+    "NEXT_PUBLIC_FRONTEND_URL": "https://ai-platform-employee.vercel.app",
+    "NEXT_PUBLIC_JWT_SECRET": "demo-jwt-secret-key-for-development"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_API_URL": "https://api.ai-platform.com",
+      "NEXT_PUBLIC_FRONTEND_URL": "https://ai-platform-employee.vercel.app",
+      "NEXT_PUBLIC_JWT_SECRET": "demo-jwt-secret-key-for-development"
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://api.ai-platform.com/api/:path*"
+    }
+  ]
+}

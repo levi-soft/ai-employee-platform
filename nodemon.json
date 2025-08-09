@@ -1,0 +1,10 @@
+{
+  "watch": ["src", "packages/shared-types/src", "packages/shared-utils/src"],
+  "ext": "ts,js,json",
+  "ignore": ["node_modules", "dist", "*.test.ts", "*.test.js", "coverage"],
+  "exec": "ts-node --project tsconfig.json src/index.ts",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "delay": "1000"
+}
